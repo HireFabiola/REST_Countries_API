@@ -1,0 +1,68 @@
+<svg width="700" height="220" viewBox="0 0 700 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="80" y1="40" x2="620" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7BDFF2"></stop>
+      <stop offset="50%" stop-color="#B2F7EF"></stop>
+      <stop offset="100%" stop-color="#EFF7F6"></stop>
+    </linearGradient>
+
+    <linearGradient id="textGradient" x1="180" y1="70" x2="520" y2="155" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF6B6B"></stop>
+      <stop offset="50%" stop-color="#FF9F1C"></stop>
+      <stop offset="100%" stop-color="#2EC4B6"></stop>
+    </linearGradient>
+
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-opacity="0.18"></feDropShadow>
+    </filter>
+
+    <path id="textArc" d="M 170 138 Q 350 42 530 138"></path>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <path d="M110 75
+         C135 35, 220 20, 320 32
+         C390 10, 505 18, 565 58
+         C625 98, 617 165, 545 185
+         C475 205, 275 205, 180 190
+         C95 176, 62 120, 110 75Z" fill="url(#bgGradient)"></path>
+  </g>
+
+  <path d="M135 165 C190 205, 265 198, 325 168" stroke="#1D3557" stroke-width="4" stroke-linecap="round" stroke-dasharray="7 10" opacity="0.65"></path>
+
+  <g transform="translate(330 154) rotate(-8)">
+    <path d="M0 0 L22 -7 C24 -8 26 -6 24 -4 L11 4 L23 12 C25 14 24 16 21 15 L8 10 L4 18 C3 20 0 20 -1 18 L-1 9 L-14 13 C-17 14 -18 11 -16 10 L-4 4 L-18 -1 C-20 -2 -19 -5 -16 -5 L-2 -3 L-1 -15 C-1 -18 3 -18 4 -15 L4 -2 Z" fill="#1D3557"></path>
+  </g>
+
+  <text font-family="'Trebuchet MS', 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif" font-size="52" font-weight="700" letter-spacing="1.2" fill="url(#textGradient)" stroke="#1D3557" stroke-width="1.5" paint-order="stroke fill">
+    <textPath href="#textArc" startOffset="50%" text-anchor="middle">
+      WanderLustApp
+    </textPath>
+  </text>
+
+  <text x="350" y="178" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="18" font-weight="600" fill="#1D3557" opacity="0.85">
+    explore • dream • discover
+  </text>
+
+  <g fill="#FF9F1C" opacity="0.95">
+    <path d="M155 58 L158 66 L166 69 L158 72 L155 80 L152 72 L144 69 L152 66 Z"></path>
+    <path d="M555 68 L558 76 L566 79 L558 82 L555 90 L552 82 L544 79 L552 76 Z"></path>
+  </g>
+
+  <g transform="translate(585 145)">
+    <circle cx="0" cy="0" r="24" fill="white" fill-opacity="0.92" stroke="#1D3557" stroke-width="2.5"></circle>
+
+    <circle cx="0" cy="0" r="16" fill="none" stroke="#1D3557" stroke-width="1.5" opacity="0.5"></circle>
+
+    <path d="M0 -14 L6 0 L0 4 L-6 0 Z" fill="#FF6B6B"></path>
+
+    <path d="M0 14 L4 1 L0 -3 L-4 1 Z" fill="#2EC4B6" opacity="0.85"></path>
+
+    <circle cx="0" cy="0" r="3.5" fill="#1D3557"></circle>
+
+    <line x1="0" y1="-22" x2="0" y2="-18" stroke="#1D3557" stroke-width="2" stroke-linecap="round"></line>
+    <line x1="22" y1="0" x2="18" y2="0" stroke="#1D3557" stroke-width="2" stroke-linecap="round"></line>
+    <line x1="0" y1="22" x2="0" y2="18" stroke="#1D3557" stroke-width="2" stroke-linecap="round"></line>
+    <line x1="-22" y1="0" x2="-18" y2="0" stroke="#1D3557" stroke-width="2" stroke-linecap="round"></line>
+  </g>
+</svg>
