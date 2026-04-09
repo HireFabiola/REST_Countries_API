@@ -1,0 +1,78 @@
+<svg width="700" height="240" viewBox="0 0 700 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.10"></feDropShadow>
+    </filter>
+
+    <path id="textArc" d="M 150 150 Q 350 58 550 150"></path>
+  </defs>
+
+  <!-- soft background cloud -->
+  <g filter="url(#softShadow)">
+    <path d="M120 88
+         C155 45, 235 32, 330 42
+         C410 32, 505 40, 560 78
+         C610 112, 605 170, 548 190
+         C470 214, 255 212, 170 198
+         C105 187, 82 128, 120 88Z" fill="#F7F7F5"></path>
+  </g>
+
+  <!-- whimsical stars -->
+  <g fill="#8E8A86" opacity="0.9">
+    <path d="M158 70 L161 77 L168 80 L161 83 L158 90 L155 83 L148 80 L155 77 Z"></path>
+    <path d="M548 78 L551 85 L558 88 L551 91 L548 98 L545 91 L538 88 L545 85 Z"></path>
+  </g>
+
+  <!-- explore: starts farther left so the e begins in the dark area -->
+  <text x="126" y="111" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1" transform="rotate(-7 126 111)">
+    explore
+  </text>
+
+  <!-- wander: overlaps dark/light space more evenly -->
+  <text x="566" y="68" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1" transform="rotate(4 566 68)">
+    wander
+  </text>
+
+  <!-- subtle dotted travel line -->
+  <path d="M175 176 C220 198, 275 198, 320 176" stroke="#A8A39D" stroke-width="3" stroke-linecap="round" stroke-dasharray="5 10" opacity="0.8"></path>
+
+  <!-- tiny airplane -->
+  <g transform="translate(328 172) rotate(-6)">
+    <path d="M0 0 L18 -6 C20 -7 21 -5.5 19.5 -4.5 L9 3 L19 9 C20.5 10.5 19.5 12 17.5 11.5 L7.5 8 L4 14 C3.2 15.4 1 15.4 0.5 14 L0.5 7.5 L-10 11 C-12 11.6 -13 10.2 -11.5 9 L-2 3.5 L-12 -0.5 C-13.5 -1.4 -12.8 -3 -10.8 -3 L0 -1.8 L0 -12 C0 -13.8 2.4 -13.8 2.8 -12 L2.8 -1.2 Z" fill="#746F6A"></path>
+  </g>
+
+  <!-- curved title -->
+  <text font-family="'Snell Roundhand', 'Segoe Script', 'Lucida Handwriting', 'Brush Script MT', cursive" font-size="56" font-weight="500" letter-spacing="0.4" fill="#4F4A46">
+    <textPath href="#textArc" startOffset="50%" text-anchor="middle">
+      WanderLustApp
+    </textPath>
+  </text>
+
+  <!-- discover: moved up slightly -->
+  <text x="362" y="156" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1">
+    discover
+  </text>
+
+  <!-- softer star compass -->
+  <g transform="translate(585 148)">
+    <text x="0" y="-34" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="13" font-weight="600" fill="#8E8A86" letter-spacing="1.5">
+      N
+    </text>
+
+    <path d="M0 -26 L5 -7 L0 -1 L-5 -7 Z" fill="#7B746D"></path>
+
+    <path d="M0 26 L4 8 L0 2 L-4 8 Z" fill="#C9C2BC"></path>
+
+    <path d="M26 0 L8 4 L2 0 L8 -4 Z" fill="#A49D96"></path>
+
+    <path d="M-26 0 L-8 4 L-2 0 L-8 -4 Z" fill="#D8D2CC"></path>
+
+    <path d="M15 -15 L7 -5 L4 -4 L5 -7 Z" fill="#B9B2AB"></path>
+    <path d="M15 15 L7 5 L4 4 L5 7 Z" fill="#D1CBC5"></path>
+    <path d="M-15 15 L-7 5 L-4 4 L-5 7 Z" fill="#B9B2AB"></path>
+    <path d="M-15 -15 L-7 -5 L-4 -4 L-5 -7 Z" fill="#D1CBC5"></path>
+
+    <circle cx="0" cy="0" r="3.5" fill="#6F6964"></circle>
+    <circle cx="0" cy="0" r="10" fill="none" stroke="#C8C1BA" stroke-width="1.1"></circle>
+  </g>
+</svg>

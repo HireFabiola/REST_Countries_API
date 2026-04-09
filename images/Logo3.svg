@@ -1,0 +1,68 @@
+<svg width="700" height="260" viewBox="0 0 700 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity="0.10"></feDropShadow>
+    </filter>
+
+    <path id="textArc" d="M 150 150 Q 350 58 550 150"></path>
+  </defs>
+
+  <!-- soft background cloud -->
+  <g filter="url(#softShadow)">
+    <path d="M120 88
+         C155 45, 235 32, 330 42
+         C410 32, 505 40, 560 78
+         C610 112, 605 182, 548 206
+         C470 232, 255 228, 170 212
+         C105 200, 82 128, 120 88Z" fill="#F7F7F5"></path>
+  </g>
+
+  <!-- shifted stars -->
+  <g fill="#8E8A86" opacity="0.85">
+    <path d="M142 78 L145 85 L152 88 L145 91 L142 98 L139 91 L132 88 L139 85 Z"></path>
+    <path d="M566 88 L569 95 L576 98 L569 101 L566 108 L563 101 L556 98 L563 95 Z"></path>
+  </g>
+
+  <!-- curved title -->
+  <text font-family="'Snell Roundhand', 'Segoe Script', 'Lucida Handwriting', 'Brush Script MT', cursive" font-size="56" font-weight="500" letter-spacing="0.4" fill="#4F4A46">
+    <textPath href="#textArc" startOffset="50%" text-anchor="middle">
+      WanderLustApp
+    </textPath>
+  </text>
+
+  <!-- centered compass -->
+  <g transform="translate(350 172)">
+    <!-- north point implied by app name above -->
+
+    <!-- main compass points -->
+    <path d="M0 -34 L7 -10 L0 -2 L-7 -10 Z" fill="#7B746D"></path>
+    <path d="M34 0 L10 7 L2 0 L10 -7 Z" fill="#A49D96"></path>
+    <path d="M0 34 L6 10 L0 2 L-6 10 Z" fill="#C9C2BC"></path>
+    <path d="M-34 0 L-10 7 L-2 0 L-10 -7 Z" fill="#D8D2CC"></path>
+
+    <!-- diagonal accents -->
+    <path d="M20 -20 L9 -7 L5 -5 L7 -9 Z" fill="#B9B2AB"></path>
+    <path d="M20 20 L9 7 L5 5 L7 9 Z" fill="#D1CBC5"></path>
+    <path d="M-20 20 L-9 7 L-5 5 L-7 9 Z" fill="#B9B2AB"></path>
+    <path d="M-20 -20 L-9 -7 L-5 -5 L-7 -9 Z" fill="#D1CBC5"></path>
+
+    <!-- center -->
+    <circle cx="0" cy="0" r="4" fill="#6F6964"></circle>
+    <circle cx="0" cy="0" r="12" fill="none" stroke="#C8C1BA" stroke-width="1.1"></circle>
+
+    <!-- west word -->
+    <text x="-68" y="5" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1">
+      explore
+    </text>
+
+    <!-- east word -->
+    <text x="72" y="5" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1">
+      wander
+    </text>
+
+    <!-- south word -->
+    <text x="0" y="62" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif" font-size="16" font-weight="500" fill="#8E8A86" letter-spacing="1">
+      discover
+    </text>
+  </g>
+</svg>

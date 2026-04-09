@@ -20,7 +20,7 @@
 
 <body>
 
-<!-- Minimal header bar with App name and dark/light mode switch-->
+    <!-- Minimal header bar with App name and dark/light mode switch-->
     <header>
         <div class="container py-5">
             <div class="d-flex justify-content-center align-items-center">
@@ -44,20 +44,50 @@
 
 
     <main>
+        <!-- Search and filter bars-->
         <div class="container pb-3">
-            <div class="input-group shadow-sm rounded">
+            <div class="row g-2 align-items-center">
 
-                <span class="input-group-text">
-                    <i class="bi bi-search"></i>
-                </span>
+                <!-- Search field -->
+                <div class="col-md-8">
+                    <div class="input-group shadow-sm rounded">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
 
-                <input type="text" class="form-control" placeholder="Where to next? Search a country..."
-                    aria-label="Search for a country" id="searchInput">
+                        <input type="text" class="form-control" placeholder="Where to next? Search a country..."
+                            aria-label="Search for a country" id="searchInput">
+                    </div>
+                </div>
 
+                <!-- Filter dropdown -->
+                <div class="col-md-4">
+                    <select class="form-select shadow-sm" id="regionFilter" aria-label="Filter by region">
+                        <option selected value="">Filter by ...</option>
+                    </select>
+                </div>
             </div>
         </div>
 
-    </main>
+
+        <!--Rows and columns for country info-->
+      <div class="container py-3">
+  <div class="row justify-content-center">
+
+    <!-- inner constrained width -->
+    <div class="col-md-10">
+      <div class="row text-center">
+
+        <div class="col-3">flag1</div>
+        <div class="col-3">flag2</div>
+        <div class="col-3">flag3</div>
+        <div class="col-3">flag4</div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
 </body>
 
 </html>
