@@ -1,6 +1,7 @@
-// Taken from Chat to create my toggle button
-const themeToggle = document.getElementById("themeToggle");
 const root = document.documentElement;
+const searchForm = document.getElementById("searchForm");
+const searchInput = document.getElementById("searchField");
+const themeToggle = document.getElementById("themeToggle");
 // Load saved theme on page load
 const savedTheme = localStorage.getItem("theme");
 if (savedTheme === "dark") {
@@ -17,6 +18,20 @@ themeToggle.addEventListener("change", () => {
     root.setAttribute("data-bs-theme", newTheme);
     localStorage.setItem("theme", newTheme);
 });
+// Add event listener for searcgh field
+searchForm?.addEventListener("submit", handleSubmit);
+// Function to handle submit 
+async function handleSubmit(event) {
+    event.preventDefault(); // prevent default page refresh
+    const searchValue = searchInput.value.trim();
+    if (!searchValue) {
+        console.log("No input provided");
+        return;
+    }
+    console.log("Searching for:", searchValue);
+    // Call your function
+    await getSearchCountry(searchValue);
+}
 async function getCountryInfo() {
     const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags");
     const result = await response.json();

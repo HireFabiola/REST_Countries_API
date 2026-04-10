@@ -1,6 +1,7 @@
-// Taken from Chat to create my toggle button
-const themeToggle = document.getElementById("themeToggle") as HTMLInputElement;
 const root = document.documentElement;
+const searchForm = document.getElementById("searchForm") as HTMLFormElement;
+const searchInput = document.getElementById("searchField") as HTMLInputElement;
+const themeToggle = document.getElementById("themeToggle") as HTMLInputElement;
 
 // Load saved theme on page load
 const savedTheme = localStorage.getItem("theme");
@@ -20,6 +21,26 @@ themeToggle.addEventListener("change", () => {
     root.setAttribute("data-bs-theme", newTheme);
     localStorage.setItem("theme", newTheme);
 });
+// Add event listener for searcgh field
+searchForm?.addEventListener("submit", handleSubmit);
+
+// Function to handle submit 
+async function handleSubmit(event: Event) {
+    event.preventDefault(); // prevent default page refresh
+
+    const searchValue = searchInput.value.trim();
+
+    if (!searchValue) {
+        console.log("No input provided");
+        return;
+    }
+
+    console.log("Searching for:", searchValue);
+
+    // Call your function
+    await getSearchCountry(searchValue);
+
+}
 
 async function getCountryInfo() {
     const response = await fetch(
@@ -107,7 +128,7 @@ async function getSearchCountry(name: string) {
 
     // Left column for flag
     const leftCol = document.createElement("div");
-    leftCol.classList.add("col-12", "col-md-6",  "p-3");
+    leftCol.classList.add("col-12", "col-md-6", "p-3");
 
     const img = document.createElement("img");
     img.src = searchedCountry.flags.svg;
@@ -164,7 +185,7 @@ async function getSearchCountry(name: string) {
 
     // Top right inner column
     const topRight = document.createElement("div");
-    topRight.classList.add("col-6",  "p-3");
+    topRight.classList.add("col-6", "p-3");
 
     const tld = document.createElement("p");
     tld.textContent = `Top Level Domain: ${searchedCountry.tld?.join(", ") ?? "N/A"}`;
@@ -172,8 +193,8 @@ async function getSearchCountry(name: string) {
     const currencies = document.createElement("p");
     const currencyList = searchedCountry.currencies
         ? Object.values(searchedCountry.currencies)
-              .map((currency: any) => currency.name)
-              .join(", ")
+            .map((currency: any) => currency.name)
+            .join(", ")
         : "N/A";
     currencies.textContent = `Currencies: ${currencyList}`;
 
@@ -206,30 +227,30 @@ async function getSearchCountry(name: string) {
     bottomSection.appendChild(borderTitle);
     bottomSection.appendChild(borderWrap);
 
-  if (searchedCountry.borders && searchedCountry.borders.length > 0) {
-    
-    const codes = searchedCountry.borders.join(",");
+    if (searchedCountry.borders && searchedCountry.borders.length > 0) {
 
-    const borderResponse = await fetch(
-        `https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`
-    );
+        const codes = searchedCountry.borders.join(",");
 
-    const borderData = await borderResponse.json();
+        const borderResponse = await fetch(
+            `https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`
+        );
 
-    borderData.forEach((country: any) => {
-        const borderItem = document.createElement("span");
-        borderItem.classList.add("border", "rounded", "px-2", "py-1");
+        const borderData = await borderResponse.json();
 
-        borderItem.textContent = country.name.common;
+        borderData.forEach((country: any) => {
+            const borderItem = document.createElement("span");
+            borderItem.classList.add("border", "rounded", "px-2", "py-1");
 
-        borderWrap.appendChild(borderItem);
-    });
+            borderItem.textContent = country.name.common;
 
-} else {
-    const noBorders = document.createElement("span");
-    noBorders.textContent = "None";
-    borderWrap.appendChild(noBorders);
-}
+            borderWrap.appendChild(borderItem);
+        });
+
+    } else {
+        const noBorders = document.createElement("span");
+        noBorders.textContent = "None";
+        borderWrap.appendChild(noBorders);
+    }
 
 
     // Assemble right side
@@ -244,6 +265,7 @@ async function getSearchCountry(name: string) {
     // Add to page
     newPage.appendChild(outerRow);
 }
+
 getCountryInfo();
 
 // getSearchCountry("Canada");
