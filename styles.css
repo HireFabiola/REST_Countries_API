@@ -21,3 +21,11 @@
   height: 1.5rem;
 }
 
+/* Customization for logo */
+.logo {
+  color: #222; /* dark for light mode */
+}
+
+[data-bs-theme="dark"] .logo {
+  color: #ffffff; /* white for dark mode */
+}
