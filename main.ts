@@ -21,37 +21,60 @@ themeToggle.addEventListener("change", () => {
     localStorage.setItem("theme", newTheme);
 });
 
-async function getFlags() {
-    const response = await fetch("https://restcountries.com/v3.1/name/haiti");
+async function getCountryInfo() {
+    const response = await fetch(
+        "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags"
+    );
+
     const result = await response.json();
 
     const container = document.getElementById("countryFlags");
 
     if (!container) return;
 
-    const country = result[0];
+    // clear previous results
+    container.innerHTML = "";
 
-    //  Create the column div
-    const col = document.createElement("div");
-    col.classList.add("col-3");
+    for (let i = 0; i < result.length; i++) {
+        let country = result[i]; // declared here
 
-    // Create the image
-    const img = document.createElement("img");
-    img.src = country.flags.svg;
-    img.alt = country.name.common;
-    img.classList.add("img-fluid");
+        // Column
+        const col = document.createElement("div");
+        col.classList.add("col-3");
 
-    // Put image inside div
-    col.appendChild(img);
+        // Flag
+        const img = document.createElement("img");
+        img.src = country.flags.svg;
+        img.alt = country.name.common;
+        img.classList.add("img-fluid");
 
-    // Put div into container
-    container.appendChild(col);
+        // Name
+        const name = document.createElement("h6");
+        name.textContent = country.name.common;
+        name.classList.add("mt-2", "fw-bold");
+
+        // Capital
+        const capital = document.createElement("p");
+        capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
+
+        // Region
+        const region = document.createElement("p");
+        region.textContent = `Region: ${country.region}`;
+
+        //  Population
+        const population = document.createElement("p");
+        population.textContent = `Population: ${country.population.toLocaleString()}`;
+
+        // Append everything to column
+        col.appendChild(img);
+        col.appendChild(name);
+        col.appendChild(capital);
+        col.appendChild(region);
+        col.appendChild(population);
+
+        // Append column to container
+        container.appendChild(col);
+    };
 }
 
-getFlags();
-
-
-getFlags();
-
-getFlags();
-getFlags();
+getCountryInfo();
