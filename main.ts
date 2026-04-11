@@ -107,12 +107,15 @@ async function getSearchCountry(name: string) {
     const result = await dataPull.json();
     const searchedCountry = result[0];
 
+    const homePage = document.getElementById("onLoadLayout");
     const newPage = document.getElementById("newLayout");
 
-    if (!newPage) {
-        console.error("newLayout not found"); // Check to keep TypeScript happy
-        return;
-    }
+
+    if (!homePage || !newPage) return;
+
+    homePage.classList.add("d-none");
+    newPage.classList.remove("d-none");
+
 
     if (!searchedCountry) {
         console.error("Country not found");
@@ -121,6 +124,20 @@ async function getSearchCountry(name: string) {
     // Otherwise, good to go with output
     // Clear any previous content
     newPage.innerHTML = "";
+
+    // Create Back button
+    const backButton = document.createElement("div");
+    backButton.textContent = "← Back";
+    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
+
+    // Add back button event listener
+    backButton.addEventListener("click", async () => {
+        newPage.classList.add("d-none");
+        homePage.classList.remove("d-none");
+    });
+
+    // Add to page BEFORE layout
+    newPage.appendChild(backButton);
 
     // Outermost row container
     const outerRow = document.createElement("div");
@@ -268,4 +285,4 @@ async function getSearchCountry(name: string) {
 
 getCountryInfo();
 
-// getSearchCountry("Canada");
+
