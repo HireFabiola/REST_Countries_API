@@ -34,12 +34,6 @@ async function getSearchCountry(name: string) {
     backButton.textContent = "← Back";
     backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
 
-    // Add back button event listener
-    backButton.addEventListener("click", async () => {
-        newPage.classList.add("d-none");
-        homePage.classList.remove("d-none");
-    });
-
     // Append button to page
     newPage.appendChild(backButton);
 
