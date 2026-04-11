@@ -1,152 +1,16 @@
-const root = document.documentElement;
-const themeToggle = document.getElementById("themeToggle");
-const searchForm = document.getElementById("searchForm");
-const searchInput = document.getElementById("searchField");
-const filterDD = document.getElementById("regionFilter");
-// Load saved theme on page load
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "dark") {
-    root.setAttribute("data-bs-theme", "dark");
-    themeToggle.checked = true;
-}
-else {
-    root.setAttribute("data-bs-theme", "light");
-    themeToggle.checked = false;
-}
-// Toggle theme when switch changes
-themeToggle.addEventListener("change", () => {
-    const newTheme = themeToggle.checked ? "dark" : "light";
-    root.setAttribute("data-bs-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-});
-// Add event listener for filter
-filterDD?.addEventListener("change", handleChange);
-// Add event listener for searcgh field
-searchForm?.addEventListener("submit", handleSubmit);
-// Function to handle selected filter option
-async function handleChange(event) {
-    // Get selected region to use in region API
-    const selectedRegion = filterDD.value;
-    console.log(selectedRegion);
-    const pullData = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
-    const result = await pullData.json();
-    // This is repeated code to rerender exact same output layout from initial load will create a render function for this if time permits
-    const container = document.getElementById("countryFlags");
-    if (!container)
-        return;
-    // clear previous results
-    container.innerHTML = "";
-    // Loop entire returned list of countries
-    for (let i = 0; i < result.length; i++) {
-        let country = result[i];
-        // Create columns
-        const col = document.createElement("div");
-        col.classList.add("col-3", "border", "rounded", "p-2", "shadow-sm");
-        col.addEventListener("click", () => {
-            console.log("I am here");
-            const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `detail.html?country=${countryName}`;
-        });
-        // Flag
-        const img = document.createElement("img");
-        img.src = country.flags.svg;
-        img.alt = country.name.common;
-        img.classList.add("img-fluid", "border", "rounded");
-        // Name
-        const name = document.createElement("h6");
-        name.textContent = country.name.common;
-        name.classList.add("mt-2", "fw-bold");
-        // Capital
-        const capital = document.createElement("p");
-        capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
-        // Region
-        const region = document.createElement("p");
-        region.textContent = `Region: ${country.region}`;
-        //  Population
-        const population = document.createElement("p");
-        population.textContent = `Population: ${country.population.toLocaleString()}`;
-        // Append everything to column
-        col.appendChild(img);
-        col.appendChild(name);
-        col.appendChild(capital);
-        col.appendChild(region);
-        col.appendChild(population);
-        // Append column to container
-        container.appendChild(col);
-    }
-    ;
-}
-// Function to handle submit 
-async function handleSubmit(event) {
-    event.preventDefault(); // prevent default page refresh
-    const searchValue = searchInput.value.trim();
-    if (!searchValue) {
-        console.log("No input provided");
-        return;
-    }
-    console.log("Searching for:", searchValue);
-    // Call your function
-    await getSearchCountry(searchValue);
-}
-async function getCountryInfo() {
-    const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags");
-    const result = await response.json();
-    const container = document.getElementById("countryFlags");
-    if (!container)
-        return;
-    // clear previous results
-    container.innerHTML = "";
-    // Loop entire returned list of countries
-    for (let i = 0; i < result.length; i++) {
-        let country = result[i];
-        // Create columns
-        const col = document.createElement("div");
-        col.classList.add("col-3", "border", "rounded", "p-2", "shadow-sm");
-        // Add event listener for click to get more info on country
-        col.addEventListener("click", () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.open(`info.html?country=${countryName}`, "_blank");
-            console.log(countryName);
-        });
-        // Flag
-        const img = document.createElement("img");
-        img.src = country.flags.svg;
-        img.alt = country.name.common;
-        img.classList.add("img-fluid", "border", "rounded");
-        // Name
-        const name = document.createElement("h6");
-        name.textContent = country.name.common;
-        name.classList.add("mt-2", "fw-bold");
-        // Capital
-        const capital = document.createElement("p");
-        capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
-        // Region
-        const region = document.createElement("p");
-        region.textContent = `Region: ${country.region}`;
-        //  Population
-        const population = document.createElement("p");
-        population.textContent = `Population: ${country.population.toLocaleString()}`;
-        // Append everything to column
-        col.appendChild(img);
-        col.appendChild(name);
-        col.appendChild(capital);
-        col.appendChild(region);
-        col.appendChild(population);
-        // Append column to container
-        container.appendChild(col);
-    }
-    ;
+const params = new URLSearchParams(window.location.search);
+const countryName = params.get("country");
+if (countryName) {
+    getSearchCountry(countryName);
 }
 async function getSearchCountry(name) {
     const dataPull = await fetch(`https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`);
     const result = await dataPull.json();
     const searchedCountry = result[0];
-    const homePage = document.getElementById("onLoadLayout");
-    const newPage = document.getElementById("newLayout");
-    if (!homePage || !newPage)
+    const newPage = document.getElementById("infoPage");
+    if (!newPage)
         return;
     // Hide main page visibility and enable newLayout visibility
-    homePage.classList.add("d-none");
     newPage.classList.remove("d-none");
     if (!searchedCountry) {
         console.error("Country not found");
@@ -277,6 +141,5 @@ async function getSearchCountry(name) {
     // Add to page
     newPage.appendChild(outerRow);
 }
-getCountryInfo();
 export {};
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=info.js.map
