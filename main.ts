@@ -1,9 +1,9 @@
 const root = document.documentElement;
-const themeToggle = document.getElementById("themeToggle") as HTMLInputElement;
+const themeToggle = document.getElementById("themeToggle") as HTMLInputElement | null;
 const searchForm = document.getElementById("searchForm") as HTMLFormElement;
 const searchInput = document.getElementById("searchField") as HTMLInputElement;
 const filterDD = document.getElementById("regionFilter") as HTMLInputElement;
-const logo = document.getElementById("logoImage") as HTMLImageElement;
+const logo = document.getElementById("logoImage") as HTMLImageElement | null;
 
 // Interface for country data returned from REST Countries API
 interface Country {
@@ -431,14 +431,18 @@ const logos: Record<Theme, string> = {
     light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
 };
 
+
 function applyTheme(theme: Theme): void {
     root.setAttribute("data-bs-theme", theme);
     localStorage.setItem("theme", theme);
 
-    // checked = DARK mode (your current logic)
-    themeToggle.checked = theme === "dark";
+    if (themeToggle) {
+        themeToggle.checked = theme === "dark";
+    }
 
-    logo.src = logos[theme];
+    if (logo) {
+        logo.src = logos[theme];
+    }
 }
 
 // Default to light on first load
@@ -446,10 +450,12 @@ const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
 
 applyTheme(savedTheme);
 
+if (themeToggle){
 themeToggle.addEventListener("change", () => {
     const newTheme: Theme = themeToggle.checked ? "dark" : "light";
     applyTheme(newTheme);
 });
+}
 
 // Add event listener for filter
 filterDD?.addEventListener("change", handleChange);
@@ -512,7 +518,7 @@ async function getCountryInfo() {
     });
 }
 
-async function getSearchCountry(name: string) {
+export async function getSearchCountry(name: string) {
     const dataPull = await fetch(
         `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
     );
