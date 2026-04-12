@@ -398,8 +398,12 @@ async function renderSearchCountryLayout(
     // Clear any previous content
     newPage.innerHTML = "";
 
+    // Create container for formatting consistency across pages
+    const container = document.createElement("div");
+    container.classList.add("container", "py-3");
+
     const backButton = createBackButton(homePage, newPage);
-    newPage.appendChild(backButton);
+    container.appendChild(backButton);
 
     // Outermost row container
     const outerRow = document.createElement("div");
@@ -412,8 +416,11 @@ async function renderSearchCountryLayout(
     outerRow.appendChild(leftCol);
     outerRow.appendChild(rightCol);
 
-    // Add to page
-    newPage.appendChild(outerRow);
+    // Add row to container
+    container.appendChild(outerRow);
+
+    // Add container to page
+    newPage.appendChild(container);
 }
 
 type Theme = "dark" | "light";
