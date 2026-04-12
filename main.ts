@@ -194,12 +194,13 @@ function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivE
 function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
     // Left column for flag
     const leftCol = document.createElement("div");
-    leftCol.classList.add("col-12", "col-md-6", "p-3");
+    leftCol.classList.add("col-12", "col-lg-6", "d-flex", "justify-content-center", "align-items-center");
 
     const img = document.createElement("img");
     img.src = searchedCountry.flags.svg;
     img.alt = searchedCountry.name.common;
     img.classList.add("img-fluid", "border", "rounded");
+    img.style.objectFit = "cover";
 
     // Append image to left column
     leftCol.appendChild(img);
@@ -211,7 +212,7 @@ function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
 function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
     // Left inner column
     const topLeft = document.createElement("div");
-    topLeft.classList.add("col-6", "p-3");
+    topLeft.classList.add("col-12", "col-lg-6", "p-3");
 
     // Sets country's name
     const countryName = document.createElement("h4");
@@ -407,7 +408,7 @@ async function renderSearchCountryLayout(
 
     // Outermost row container
     const outerRow = document.createElement("div");
-    outerRow.classList.add("row", "g-3");
+    outerRow.classList.add("row", "g-3", "align-items-stretch");
 
     const leftCol = createSearchLeftColumn(searchedCountry);
     const rightCol = await createSearchRightColumn(searchedCountry);
