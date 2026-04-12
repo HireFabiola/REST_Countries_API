@@ -137,9 +137,12 @@ function createCountryCard(
 
     col.addEventListener("click", clickHandler);
 
-    // Add visited/ toggle icon to each card
-    const visitedToggle = createVisitedToggle(country);
-
+    // Add visited/ toggle icon to each card if user is logged in
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const visitedToggle = createVisitedToggle(country);
+        col.appendChild(visitedToggle);
+    }
     // Flag
     const img = createCountryImage(country);
 
@@ -156,8 +159,6 @@ function createCountryCard(
     const population = createCountryPopulation(country);
 
     // Append everything to column
-    col.appendChild(visitedToggle);
-    col.appendChild(img);
     col.appendChild(img);
     col.appendChild(name);
     col.appendChild(capital);
@@ -580,8 +581,6 @@ function showErrorMessage(message: string) {
     `;
 }
 
-getCountryInfo();
-
 function renderTravelCounter(totalCountries: number): void {
     const counter = document.getElementById("travelCounter");
     const user = getLoggedInRegisteredUser();
@@ -589,7 +588,12 @@ function renderTravelCounter(totalCountries: number): void {
     if (!counter) return;
 
     if (!user) {
-        counter.textContent = "";
+        counter.innerHTML = `
+            <div class="text-center">
+                <div class="fw-bold">Start your journey 🌍</div>
+                <div>Log in or register to track the countries you've explored.</div>
+            </div>
+        `;
         return;
     }
 
@@ -600,12 +604,13 @@ function renderTravelCounter(totalCountries: number): void {
         : "0";
 
     counter.innerHTML = `
-    <div class="text-center">
-        <div>You’ve explored <strong>${visited}</strong> countries</div>
-        <div><strong>${percent}%</strong> of the globe 🌍</div>
-        <div class="mt-1">Where will your next adventure be?✈️</div>
-    </div>
-`;
+        <div class="text-center">
+            <div>Welcome <strong>${username}</strong>! </div>
+            <div>You’ve explored <strong>${visited}</strong> countries</div>
+            <div><strong>${percent}%</strong> of the globe 🌍</div>
+            <div class="mt-1">Where will your next adventure be?✈️</div>
+        </div>
+    `;
 }
 
 type RegisteredUser = {
@@ -640,6 +645,7 @@ function saveCurrentUser(user: ActiveSession): void {
 
 function clearCurrentUser(): void {
     localStorage.removeItem("wanderlustCurrentUser");
+    sessionStorage.removeItem("wanderlustCurrentUser");
 }
 
 function setMessage(elementId: string, message: string, isError: boolean = true): void {
@@ -722,11 +728,14 @@ function initAuth(): void {
 
             setMessage("registerMessage", "Registration successful.", false);
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
             registerForm.reset();
 
             setTimeout(() => closeAuthModal(), 500);
         });
     }
+
 
     if (loginForm) {
         loginForm.addEventListener("submit", (event) => {
@@ -758,6 +767,8 @@ function initAuth(): void {
             saveCurrentUser({ name: user.name, email: user.email });
             setMessage("loginMessage", "Login successful.", false);
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
             loginForm.reset();
 
             setTimeout(() => closeAuthModal(), 500);
@@ -769,15 +780,19 @@ function initAuth(): void {
             event.preventDefault();
             clearCurrentUser();
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
         });
     }
 
     updateAuthUI();
+    updateSearchPlaceholder();
+
 }
 
 function updateSearchPlaceholder(): void {
     const user = getCurrentUser(); // or getLoggedInRegisteredUser()
-
+    console.log("I am in placeholer function", user)
     if (!searchInput) return;
 
     if (user) {
@@ -880,3 +895,4 @@ function createVisitedToggle(country: Country): HTMLButtonElement {
 
 initAuth();
 updateSearchPlaceholder();
+getCountryInfo();
