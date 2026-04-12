@@ -82,8 +82,10 @@ function createCountryPopulation(country) {
 function createCountryCard(country, clickHandler) {
     // Create columns
     const col = document.createElement("div");
-    col.classList.add("border", "rounded", "p-2", "shadow-sm");
+    col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
     col.addEventListener("click", clickHandler);
+    // Add visited/ toggle icon to each card
+    const visitedToggle = createVisitedToggle(country);
     // Flag
     const img = createCountryImage(country);
     // Name
@@ -95,6 +97,8 @@ function createCountryCard(country, clickHandler) {
     //  Population
     const population = createCountryPopulation(country);
     // Append everything to column
+    col.appendChild(visitedToggle);
+    col.appendChild(img);
     col.appendChild(img);
     col.appendChild(name);
     col.appendChild(capital);
@@ -410,28 +414,232 @@ function showErrorMessage(message) {
     `;
 }
 getCountryInfo();
-function saveUserProfile(profile) {
-    localStorage.setItem("wanderlustUser", JSON.stringify(profile));
-}
-function getUserProfile() {
-    const raw = localStorage.getItem("wanderlustUser");
-    return raw ? JSON.parse(raw) : null;
-}
 function renderTravelCounter(totalCountries) {
     const counter = document.getElementById("travelCounter");
-    const user = getUserProfile();
-    if (!counter || !user)
+    const user = getLoggedInRegisteredUser();
+    if (!counter)
         return;
+    if (!user) {
+        counter.textContent = "";
+        return;
+    }
     const username = user.name;
     const visited = user.visitedCountries.length;
-    const total = totalCountries;
-    const percent = total > 0
-        ? ((visited / total) * 100).toFixed(1)
+    const percent = totalCountries > 0
+        ? ((visited / totalCountries) * 100).toFixed(1)
         : "0";
     counter.innerHTML = `
-        <strong>${username}</strong>, you've explored 
-        <strong>${visited}</strong> of <strong>${total}</strong> countries — 
-        <strong>${percent}%</strong> of the world!
-    `;
+    <div class="text-center">
+        <div>You’ve explored <strong>${visited}</strong> countries</div>
+        <div><strong>${percent}%</strong> of the globe 🌍</div>
+        <div class="mt-1">Where will your next adventure be?✈️</div>
+    </div>
+`;
 }
+function getRegisteredUsers() {
+    const raw = localStorage.getItem("wanderlustUsers");
+    return raw ? JSON.parse(raw) : [];
+}
+function saveRegisteredUsers(users) {
+    localStorage.setItem("wanderlustUsers", JSON.stringify(users));
+}
+function getCurrentUser() {
+    const raw = localStorage.getItem("wanderlustCurrentUser");
+    return raw ? JSON.parse(raw) : null;
+}
+function saveCurrentUser(user) {
+    localStorage.setItem("wanderlustCurrentUser", JSON.stringify(user));
+}
+function clearCurrentUser() {
+    localStorage.removeItem("wanderlustCurrentUser");
+}
+function setMessage(elementId, message, isError = true) {
+    const el = document.getElementById(elementId);
+    if (!el)
+        return;
+    el.textContent = message;
+    el.classList.remove("text-danger", "text-success");
+    el.classList.add(isError ? "text-danger" : "text-success");
+}
+function clearMessage(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el)
+        return;
+    el.textContent = "";
+}
+function updateAuthUI() {
+    const authLink = document.getElementById("authLink");
+    const welcomeUser = document.getElementById("welcomeUser");
+    const logoutLink = document.getElementById("logoutLink");
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        if (authLink)
+            authLink.classList.add("d-none");
+        if (logoutLink)
+            logoutLink.classList.remove("d-none");
+        // if (welcomeUser) welcomeUser.textContent = `Hi, ${currentUser.name}`;
+    }
+    else {
+        if (authLink)
+            authLink.classList.remove("d-none");
+        if (logoutLink)
+            logoutLink.classList.add("d-none");
+        if (welcomeUser)
+            welcomeUser.textContent = "";
+    }
+}
+function closeAuthModal() {
+    const modalEl = document.getElementById("authModal");
+    if (!modalEl)
+        return;
+    const modal = window.bootstrap?.Modal.getInstance(modalEl);
+    modal?.hide();
+}
+function initAuth() {
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const logoutLink = document.getElementById("logoutLink");
+    if (registerForm) {
+        registerForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            clearMessage("registerMessage");
+            const name = document.getElementById("registerName").value.trim();
+            const email = document.getElementById("registerEmail").value.trim();
+            const password = document.getElementById("registerPassword").value.trim();
+            if (!name || !email || !password) {
+                setMessage("registerMessage", "Please complete all fields.");
+                return;
+            }
+            const users = getRegisteredUsers();
+            const exists = users.some(user => user.email.toLowerCase() === email.toLowerCase());
+            if (exists) {
+                setMessage("registerMessage", "An account with this email already exists.");
+                return;
+            }
+            users.push({
+                name,
+                email,
+                password,
+                visitedCountries: []
+            });
+            saveRegisteredUsers(users);
+            saveCurrentUser({ name, email });
+            setMessage("registerMessage", "Registration successful.", false);
+            updateAuthUI();
+            registerForm.reset();
+            setTimeout(() => closeAuthModal(), 500);
+        });
+    }
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            clearMessage("loginMessage");
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+            if (!email || !password) {
+                setMessage("loginMessage", "Please enter email and password.");
+                return;
+            }
+            const user = getRegisteredUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
+            if (!user) {
+                setMessage("loginMessage", "No account found with that email.");
+                return;
+            }
+            if (user.password !== password) {
+                setMessage("loginMessage", "Incorrect password.");
+                return;
+            }
+            saveCurrentUser({ name: user.name, email: user.email });
+            setMessage("loginMessage", "Login successful.", false);
+            updateAuthUI();
+            loginForm.reset();
+            setTimeout(() => closeAuthModal(), 500);
+        });
+    }
+    if (logoutLink) {
+        logoutLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            clearCurrentUser();
+            updateAuthUI();
+        });
+    }
+    updateAuthUI();
+}
+function updateSearchPlaceholder() {
+    const user = getCurrentUser(); // or getLoggedInRegisteredUser()
+    if (!searchInput)
+        return;
+    if (user) {
+        searchInput.placeholder = `Pack your bags ${user.name}! Where to next... `;
+    }
+    else {
+        searchInput.placeholder = "Search a country...";
+    }
+}
+function getLoggedInRegisteredUser() {
+    const currentUser = getCurrentUser();
+    if (!currentUser)
+        return null;
+    const users = getRegisteredUsers();
+    return users.find(user => user.email.toLowerCase() === currentUser.email.toLowerCase()) ?? null;
+}
+function isCountryVisited(countryName) {
+    const user = getLoggedInRegisteredUser();
+    if (!user)
+        return false;
+    return user.visitedCountries.includes(countryName);
+}
+function toggleVisitedCountry(countryName) {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+        alert("Please log in or register to track countries you've visited.");
+        return;
+    }
+    const users = getRegisteredUsers();
+    const user = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+    if (!user)
+        return;
+    const alreadyVisited = user.visitedCountries.includes(countryName);
+    if (alreadyVisited) {
+        user.visitedCountries = user.visitedCountries.filter(name => name !== countryName);
+    }
+    else {
+        user.visitedCountries.push(countryName);
+    }
+    saveRegisteredUsers(users);
+}
+function updateVisitedButtonState(button, countryName) {
+    const visited = isCountryVisited(countryName);
+    button.innerHTML = visited
+        ? `<i class="bi bi-bookmark-check-fill"></i>`
+        : `<i class="bi bi-bookmark"></i>`;
+    button.classList.toggle("visited", visited);
+    button.title = visited ? "Visited" : "Mark as visited";
+    button.setAttribute("aria-label", visited
+        ? `${countryName} marked as visited`
+        : `Mark ${countryName} as visited`);
+}
+function updateTravelCounterFromStoredCountries() {
+    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
+    if (totalCountries > 0) {
+        renderTravelCounter(totalCountries);
+    }
+}
+function createVisitedToggle(country) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("visited-toggle", "btn", "btn-sm");
+    button.setAttribute("aria-label", `Mark ${country.name.common} as visited`);
+    button.title = "Mark as visited";
+    updateVisitedButtonState(button, country.name.common);
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleVisitedCountry(country.name.common);
+        updateVisitedButtonState(button, country.name.common);
+        updateTravelCounterFromStoredCountries();
+    });
+    return button;
+}
+initAuth();
+updateSearchPlaceholder();
 //# sourceMappingURL=main.js.map

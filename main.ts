@@ -133,9 +133,12 @@ function createCountryCard(
 ): HTMLDivElement {
     // Create columns
     const col = document.createElement("div");
-    col.classList.add("border", "rounded", "p-2", "shadow-sm");
-    
+    col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
+
     col.addEventListener("click", clickHandler);
+
+    // Add visited/ toggle icon to each card
+    const visitedToggle = createVisitedToggle(country);
 
     // Flag
     const img = createCountryImage(country);
@@ -153,6 +156,8 @@ function createCountryCard(
     const population = createCountryPopulation(country);
 
     // Append everything to column
+    col.appendChild(visitedToggle);
+    col.appendChild(img);
     col.appendChild(img);
     col.appendChild(name);
     col.appendChild(capital);
@@ -577,37 +582,301 @@ function showErrorMessage(message: string) {
 
 getCountryInfo();
 
-type UserProfile = {
-    name: string;
-    visitedCountries: string[];
-};
-
-function saveUserProfile(profile: UserProfile): void {
-    localStorage.setItem("wanderlustUser", JSON.stringify(profile));
-}
-
-function getUserProfile(): UserProfile | null {
-    const raw = localStorage.getItem("wanderlustUser");
-    return raw ? JSON.parse(raw) as UserProfile : null;
-}
-
 function renderTravelCounter(totalCountries: number): void {
     const counter = document.getElementById("travelCounter");
-    const user = getUserProfile();
+    const user = getLoggedInRegisteredUser();
 
-    if (!counter || !user) return;
+    if (!counter) return;
+
+    if (!user) {
+        counter.textContent = "";
+        return;
+    }
 
     const username = user.name;
     const visited = user.visitedCountries.length;
-    const total = totalCountries;
-
-    const percent = total > 0
-        ? ((visited / total) * 100).toFixed(1)
+    const percent = totalCountries > 0
+        ? ((visited / totalCountries) * 100).toFixed(1)
         : "0";
 
     counter.innerHTML = `
-        <strong>${username}</strong>, you've explored 
-        <strong>${visited}</strong> of <strong>${total}</strong> countries — 
-        <strong>${percent}%</strong> of the world!
-    `;
+    <div class="text-center">
+        <div>You’ve explored <strong>${visited}</strong> countries</div>
+        <div><strong>${percent}%</strong> of the globe 🌍</div>
+        <div class="mt-1">Where will your next adventure be?✈️</div>
+    </div>
+`;
 }
+
+type RegisteredUser = {
+    name: string;
+    email: string;
+    password: string;
+    visitedCountries: string[];
+};
+
+type ActiveSession = {
+    name: string;
+    email: string;
+};
+
+function getRegisteredUsers(): RegisteredUser[] {
+    const raw = localStorage.getItem("wanderlustUsers");
+    return raw ? JSON.parse(raw) as RegisteredUser[] : [];
+}
+
+function saveRegisteredUsers(users: RegisteredUser[]): void {
+    localStorage.setItem("wanderlustUsers", JSON.stringify(users));
+}
+
+function getCurrentUser(): ActiveSession | null {
+    const raw = localStorage.getItem("wanderlustCurrentUser");
+    return raw ? JSON.parse(raw) as ActiveSession : null;
+}
+
+function saveCurrentUser(user: ActiveSession): void {
+    localStorage.setItem("wanderlustCurrentUser", JSON.stringify(user));
+}
+
+function clearCurrentUser(): void {
+    localStorage.removeItem("wanderlustCurrentUser");
+}
+
+function setMessage(elementId: string, message: string, isError: boolean = true): void {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.textContent = message;
+    el.classList.remove("text-danger", "text-success");
+    el.classList.add(isError ? "text-danger" : "text-success");
+}
+
+function clearMessage(elementId: string): void {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = "";
+}
+
+function updateAuthUI(): void {
+    const authLink = document.getElementById("authLink") as HTMLAnchorElement | null;
+    const welcomeUser = document.getElementById("welcomeUser") as HTMLElement | null;
+    const logoutLink = document.getElementById("logoutLink") as HTMLAnchorElement | null;
+
+    const currentUser = getCurrentUser();
+
+    if (currentUser) {
+        if (authLink) authLink.classList.add("d-none");
+        if (logoutLink) logoutLink.classList.remove("d-none");
+        // if (welcomeUser) welcomeUser.textContent = `Hi, ${currentUser.name}`;
+    } else {
+        if (authLink) authLink.classList.remove("d-none");
+        if (logoutLink) logoutLink.classList.add("d-none");
+        if (welcomeUser) welcomeUser.textContent = "";
+    }
+}
+
+function closeAuthModal(): void {
+    const modalEl = document.getElementById("authModal");
+    if (!modalEl) return;
+
+    const modal = (window as any).bootstrap?.Modal.getInstance(modalEl);
+    modal?.hide();
+}
+
+function initAuth(): void {
+    const loginForm = document.getElementById("loginForm") as HTMLFormElement | null;
+    const registerForm = document.getElementById("registerForm") as HTMLFormElement | null;
+    const logoutLink = document.getElementById("logoutLink") as HTMLAnchorElement | null;
+
+    if (registerForm) {
+        registerForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            clearMessage("registerMessage");
+
+            const name = (document.getElementById("registerName") as HTMLInputElement).value.trim();
+            const email = (document.getElementById("registerEmail") as HTMLInputElement).value.trim();
+            const password = (document.getElementById("registerPassword") as HTMLInputElement).value.trim();
+
+            if (!name || !email || !password) {
+                setMessage("registerMessage", "Please complete all fields.");
+                return;
+            }
+
+            const users = getRegisteredUsers();
+            const exists = users.some(user => user.email.toLowerCase() === email.toLowerCase());
+
+            if (exists) {
+                setMessage("registerMessage", "An account with this email already exists.");
+                return;
+            }
+
+            users.push({
+                name,
+                email,
+                password,
+                visitedCountries: []
+            });
+
+            saveRegisteredUsers(users);
+            saveCurrentUser({ name, email });
+
+            setMessage("registerMessage", "Registration successful.", false);
+            updateAuthUI();
+            registerForm.reset();
+
+            setTimeout(() => closeAuthModal(), 500);
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            clearMessage("loginMessage");
+
+            const email = (document.getElementById("loginEmail") as HTMLInputElement).value.trim();
+            const password = (document.getElementById("loginPassword") as HTMLInputElement).value.trim();
+
+            if (!email || !password) {
+                setMessage("loginMessage", "Please enter email and password.");
+                return;
+            }
+
+            const user = getRegisteredUsers().find(
+                u => u.email.toLowerCase() === email.toLowerCase()
+            );
+
+            if (!user) {
+                setMessage("loginMessage", "No account found with that email.");
+                return;
+            }
+
+            if (user.password !== password) {
+                setMessage("loginMessage", "Incorrect password.");
+                return;
+            }
+
+            saveCurrentUser({ name: user.name, email: user.email });
+            setMessage("loginMessage", "Login successful.", false);
+            updateAuthUI();
+            loginForm.reset();
+
+            setTimeout(() => closeAuthModal(), 500);
+        });
+    }
+
+    if (logoutLink) {
+        logoutLink.addEventListener("click", (event) => {
+            event.preventDefault();
+            clearCurrentUser();
+            updateAuthUI();
+        });
+    }
+
+    updateAuthUI();
+}
+
+function updateSearchPlaceholder(): void {
+    const user = getCurrentUser(); // or getLoggedInRegisteredUser()
+
+    if (!searchInput) return;
+
+    if (user) {
+        searchInput.placeholder = `Pack your bags ${user.name}! Where to next... `;
+    } else {
+        searchInput.placeholder = "Search a country...";
+    }
+}
+function getLoggedInRegisteredUser(): RegisteredUser | null {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return null;
+
+    const users = getRegisteredUsers();
+    return users.find(
+        user => user.email.toLowerCase() === currentUser.email.toLowerCase()
+    ) ?? null;
+}
+
+function isCountryVisited(countryName: string): boolean {
+    const user = getLoggedInRegisteredUser();
+    if (!user) return false;
+
+    return user.visitedCountries.includes(countryName);
+}
+
+function toggleVisitedCountry(countryName: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+        alert("Please log in or register to track countries you've visited.");
+        return;
+    }
+
+    const users = getRegisteredUsers();
+    const user = users.find(
+        u => u.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+
+    if (!user) return;
+
+    const alreadyVisited = user.visitedCountries.includes(countryName);
+
+    if (alreadyVisited) {
+        user.visitedCountries = user.visitedCountries.filter(
+            name => name !== countryName
+        );
+    } else {
+        user.visitedCountries.push(countryName);
+    }
+
+    saveRegisteredUsers(users);
+}
+
+function updateVisitedButtonState(
+    button: HTMLButtonElement,
+    countryName: string
+): void {
+    const visited = isCountryVisited(countryName);
+
+    button.innerHTML = visited
+        ? `<i class="bi bi-bookmark-check-fill"></i>`
+        : `<i class="bi bi-bookmark"></i>`;
+
+    button.classList.toggle("visited", visited);
+    button.title = visited ? "Visited" : "Mark as visited";
+    button.setAttribute(
+        "aria-label",
+        visited
+            ? `${countryName} marked as visited`
+            : `Mark ${countryName} as visited`
+    );
+}
+
+function updateTravelCounterFromStoredCountries(): void {
+    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
+
+    if (totalCountries > 0) {
+        renderTravelCounter(totalCountries);
+    }
+}
+
+function createVisitedToggle(country: Country): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("visited-toggle", "btn", "btn-sm");
+    button.setAttribute("aria-label", `Mark ${country.name.common} as visited`);
+    button.title = "Mark as visited";
+
+    updateVisitedButtonState(button, country.name.common);
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        toggleVisitedCountry(country.name.common);
+        updateVisitedButtonState(button, country.name.common);
+        updateTravelCounterFromStoredCountries();
+    });
+
+    return button;
+}
+
+initAuth();
+updateSearchPlaceholder();

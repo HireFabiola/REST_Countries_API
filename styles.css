@@ -79,3 +79,22 @@ Customization for logo
     display: block;
 }
 
+.travel-counter {
+    font-size: 0.95rem;
+    color: var(--bs-body-color);
+    line-height: 1.4;
+    max-width: 420px;
+}
+
+#searchField::placeholder {
+    color: #6c757d; /* Bootstrap's muted gray */
+    opacity: 1;     /* ensures consistent rendering across browsers */
+}
+
+[data-bs-theme="light"] #searchField::placeholder {
+    color: #6c757d; /* darker gray for light mode */
+}
+
+[data-bs-theme="dark"] #searchField::placeholder {
+    color: #adb5bd; /* lighter gray for dark mode */
+}
