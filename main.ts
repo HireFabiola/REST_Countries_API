@@ -3,6 +3,29 @@ const themeToggle = document.getElementById("themeToggle") as HTMLInputElement;
 const searchForm = document.getElementById("searchForm") as HTMLFormElement;
 const searchInput = document.getElementById("searchField") as HTMLInputElement;
 const filterDD = document.getElementById("regionFilter") as HTMLInputElement;
+const logo = document.getElementById("logoImage") as HTMLImageElement;
+
+// Interface for country data returned from REST Countries API
+interface Country {
+    name: {
+        common: string;
+        official: string;
+    };
+    capital?: string[];
+    region: string;
+    subregion?: string;
+    population: number;
+    flags: {
+        svg: string;
+    };
+    tld?: string[];
+    currencies?: Record<string, {
+        name: string;
+        symbol?: string;
+    }>;
+    languages?: Record<string, string>;
+    borders?: string[];
+}
 
 // Code for border countries hover cards
 let activeHoverCard: HTMLDivElement | null = null;
@@ -24,7 +47,7 @@ async function showBorderCountryHover(
         `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,capital,region,population,flags`
     );
 
-    const result = await response.json();
+    const result: Country[] = await response.json();
     const country = result[0];
 
     if (!country) return;
@@ -61,7 +84,7 @@ function clearContainer(container: HTMLElement): void {
 }
 
 // Helper function to create country card image
-function createCountryImage(country: any): HTMLImageElement {
+function createCountryImage(country: Country): HTMLImageElement {
     const img = document.createElement("img");
     img.src = country.flags.svg;
     img.alt = country.name.common;
@@ -70,7 +93,7 @@ function createCountryImage(country: any): HTMLImageElement {
 }
 
 // Helper function to create country card name
-function createCountryName(country: any): HTMLHeadingElement {
+function createCountryName(country: Country): HTMLHeadingElement {
     const name = document.createElement("h6");
     name.textContent = country.name.common;
     name.classList.add("mt-2", "fw-bold");
@@ -78,21 +101,21 @@ function createCountryName(country: any): HTMLHeadingElement {
 }
 
 // Helper function to create country card capital
-function createCountryCapital(country: any): HTMLParagraphElement {
+function createCountryCapital(country: Country): HTMLParagraphElement {
     const capital = document.createElement("p");
     capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
     return capital;
 }
 
 // Helper function to create country card region
-function createCountryRegion(country: any): HTMLParagraphElement {
+function createCountryRegion(country: Country): HTMLParagraphElement {
     const region = document.createElement("p");
     region.textContent = `Region: ${country.region}`;
     return region;
 }
 
 // Helper function to create country card population
-function createCountryPopulation(country: any): HTMLParagraphElement {
+function createCountryPopulation(country: Country): HTMLParagraphElement {
     const population = document.createElement("p");
     population.textContent = `Population: ${country.population.toLocaleString()}`;
     return population;
@@ -100,7 +123,7 @@ function createCountryPopulation(country: any): HTMLParagraphElement {
 
 // Helper function to build reusable country card
 function createCountryCard(
-    country: any,
+    country: Country,
     clickHandler: () => void
 ): HTMLDivElement {
     // Create columns
@@ -136,23 +159,17 @@ function createCountryCard(
 
 // Helper function to render list of countries to page
 function renderCountryCards(
-    countryList: any[],
-    clickHandlerBuilder: (country: any) => () => void
+    countryList: Country[],
+    clickHandlerBuilder: (country: Country) => () => void
 ): void {
     const container = getCountryFlagsContainer();
 
     if (!container) return;
 
-    // clear previous results
     clearContainer(container);
 
-    // Loop entire returned list of countries
-    for (let i = 0; i < countryList.length; i++) {
-        let country = countryList[i];
-
+    for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
-
-        // Append column to container
         container.appendChild(col);
     }
 }
@@ -174,7 +191,7 @@ function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivE
 }
 
 // Helper function to create left flag column for search layout
-function createSearchLeftColumn(searchedCountry: any): HTMLDivElement {
+function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
     // Left column for flag
     const leftCol = document.createElement("div");
     leftCol.classList.add("col-12", "col-md-6", "p-3");
@@ -191,7 +208,7 @@ function createSearchLeftColumn(searchedCountry: any): HTMLDivElement {
 }
 
 // Helper function to create top left detail section
-function createTopLeftDetails(searchedCountry: any): HTMLDivElement {
+function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
     // Left inner column
     const topLeft = document.createElement("div");
     topLeft.classList.add("col-6", "p-3");
@@ -232,7 +249,7 @@ function createTopLeftDetails(searchedCountry: any): HTMLDivElement {
 }
 
 // Helper function to create top right detail section
-function createTopRightDetails(searchedCountry: any): HTMLDivElement {
+function createTopRightDetails(searchedCountry: Country): HTMLDivElement {
     // Top right inner column
     const topRight = document.createElement("div");
     topRight.classList.add("col-6", "p-3");
@@ -243,7 +260,7 @@ function createTopRightDetails(searchedCountry: any): HTMLDivElement {
     const currencies = document.createElement("p");
     const currencyList = searchedCountry.currencies
         ? Object.values(searchedCountry.currencies)
-            .map((currency: any) => currency.name)
+            .map((currency) => currency.name)
             .join(", ")
         : "N/A";
     currencies.textContent = `Currencies: ${currencyList}`;
@@ -262,7 +279,7 @@ function createTopRightDetails(searchedCountry: any): HTMLDivElement {
 }
 
 // Helper function to create top section of search detail layout
-function createSearchTopSection(searchedCountry: any): HTMLDivElement {
+function createSearchTopSection(searchedCountry: Country): HTMLDivElement {
     // Top row of right outer column
     const topSection = document.createElement("div");
     topSection.classList.add("p-3");
@@ -282,7 +299,7 @@ function createSearchTopSection(searchedCountry: any): HTMLDivElement {
 }
 
 // Helper function to create border button
-function createBorderCountryButton(country: any): HTMLButtonElement {
+function createBorderCountryButton(country: { name: { common: string } }): HTMLButtonElement {
     const borderItem = document.createElement("button");
     borderItem.type = "button";
     borderItem.textContent = country.name.common;
@@ -321,7 +338,7 @@ function createBottomSectionShell(): { bottomSection: HTMLDivElement; borderWrap
 
 // Helper function to render border countries
 async function renderBorderCountries(
-    searchedCountry: any,
+    searchedCountry: Country,
     borderWrap: HTMLDivElement
 ): Promise<void> {
     if (searchedCountry.borders && searchedCountry.borders.length > 0) {
@@ -331,12 +348,13 @@ async function renderBorderCountries(
             `https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`
         );
 
-        const borderData = await borderResponse.json();
+        const borderData: { name: { common: string } }[] = await borderResponse.json();
 
-        borderData.forEach((country: any) => {
+        borderData.forEach((country) => {
             const borderItem = createBorderCountryButton(country);
             borderWrap.appendChild(borderItem);
         });
+
     } else {
         const noBorders = document.createElement("span");
         noBorders.textContent = "None";
@@ -345,14 +363,14 @@ async function renderBorderCountries(
 }
 
 // Helper function to create bottom section of search detail layout
-async function createSearchBottomSection(searchedCountry: any): Promise<HTMLDivElement> {
+async function createSearchBottomSection(searchedCountry: Country): Promise<HTMLDivElement> {
     const { bottomSection, borderWrap } = createBottomSectionShell();
     await renderBorderCountries(searchedCountry, borderWrap);
     return bottomSection;
 }
 
 // Helper function to create right column for search detail layout
-async function createSearchRightColumn(searchedCountry: any): Promise<HTMLDivElement> {
+async function createSearchRightColumn(searchedCountry: Country): Promise<HTMLDivElement> {
     // Right column containing nested rows and columns
     const rightCol = document.createElement("div");
     rightCol.classList.add("col-12", "col-md-6");
@@ -373,7 +391,7 @@ async function createSearchRightColumn(searchedCountry: any): Promise<HTMLDivEle
 
 // Helper function to render searched country detail layout
 async function renderSearchCountryLayout(
-    searchedCountry: any,
+    searchedCountry: Country,
     homePage: HTMLElement,
     newPage: HTMLElement
 ): Promise<void> {
@@ -398,23 +416,31 @@ async function renderSearchCountryLayout(
     newPage.appendChild(outerRow);
 }
 
-// Load saved theme on page load
-const savedTheme = localStorage.getItem("theme");
+type Theme = "dark" | "light";
 
-if (savedTheme === "dark") {
-    root.setAttribute("data-bs-theme", "dark");
-    themeToggle.checked = true;
-} else {
-    root.setAttribute("data-bs-theme", "light");
-    themeToggle.checked = false;
+const logos: Record<Theme, string> = {
+    dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",
+    light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
+};
+
+function applyTheme(theme: Theme): void {
+    root.setAttribute("data-bs-theme", theme);
+    localStorage.setItem("theme", theme);
+
+    // checked = DARK mode (your current logic)
+    themeToggle.checked = theme === "dark";
+
+    logo.src = logos[theme];
 }
 
-// Toggle theme when switch changes
-themeToggle.addEventListener("change", () => {
-    const newTheme = themeToggle.checked ? "dark" : "light";
+// Default to light on first load
+const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
 
-    root.setAttribute("data-bs-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
+applyTheme(savedTheme);
+
+themeToggle.addEventListener("change", () => {
+    const newTheme: Theme = themeToggle.checked ? "dark" : "light";
+    applyTheme(newTheme);
 });
 
 // Add event listener for filter
@@ -429,9 +455,9 @@ async function handleChange(event: Event) {
     const selectedRegion = filterDD.value;
     console.log(selectedRegion);
     const pullData = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
-    const result = await pullData.json();
+    const result: Country[] = await pullData.json();
 
-    renderCountryCards(result, (country: any) => {
+    renderCountryCards(result, (country: Country) => {
         return () => {
             console.log("I am here");
             const countryName = encodeURIComponent(country.name.common);
@@ -439,6 +465,8 @@ async function handleChange(event: Event) {
         };
     });
 }
+
+
 
 // Function to handle submit 
 async function handleSubmit(event: Event) {
@@ -455,6 +483,7 @@ async function handleSubmit(event: Event) {
 
     // Call your function
     await getSearchCountry(searchValue);
+
 }
 
 async function getCountryInfo() {
@@ -462,9 +491,9 @@ async function getCountryInfo() {
         "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags"
     );
 
-    const result = await response.json();
+    const result: Country[] = await response.json();
 
-    renderCountryCards(result, (country: any) => {
+    renderCountryCards(result, (country: Country) => {
         return () => {
             // Add event listener for click to get more info on country
             const countryName = encodeURIComponent(country.name.common);
@@ -480,8 +509,8 @@ async function getSearchCountry(name: string) {
         `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
     );
 
-    const result = await dataPull.json();
-    const searchedCountry = result[0];
+    const result: Country[] = await dataPull.json();
+    const searchedCountry: Country | undefined = result[0];
 
     const homePage = document.getElementById("onLoadLayout");
     const newPage = document.getElementById("newLayout");
@@ -492,11 +521,11 @@ async function getSearchCountry(name: string) {
     homePage.classList.add("d-none");
     newPage.classList.remove("d-none");
 
+
     if (!searchedCountry) {
         console.error("Country not found");
         return;
     }
-
     // Otherwise, good to go with output
     await renderSearchCountryLayout(searchedCountry, homePage, newPage);
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -22,74 +22,12 @@
 
     <!-- Minimal header bar with App name and dark/light mode switch-->
     <header>
-        <div class="container-fluid py-5">
+        <div class="container py-5">
             <div class="d-flex justify-content-start align-items-center">
                 <!-- Place heading to the left-->
-                <div class="logo"><svg width="500" height="170" viewBox="0 0 700 200"
-                        xmlns="http://www.w3.org/2000/svg">
+                <div class="logo"><img id="logoImage" src="../Project_HtmlCSSJavaScript/images/WhiteLogo.png" width="auto" height="200"></div>
 
-                        <defs>
-                            <!-- flatter curve -->
-                            <path id="textArc" d="M 170 125 Q 350 65 530 125" />
-                        </defs>
-
-                        <!-- stars (slightly adjusted upward) -->
-                        <g fill="currentColor" opacity="0.45">
-                            <path d="M170 55 L173 62 L180 65 L173 68 L170 75 L167 68 L160 65 L167 62 Z" />
-                            <path d="M530 60 L533 67 L540 70 L533 73 L530 80 L527 73 L520 70 L527 67 Z" />
-                        </g>
-
-                        <!-- curved title (slightly smaller + tighter) -->
-                        <text
-                            font-family="'Snell Roundhand', 'Segoe Script', 'Lucida Handwriting', 'Brush Script MT', cursive"
-                            font-size="50" font-weight="500" letter-spacing="0.4" fill="currentColor">
-                            <textPath href="#textArc" startOffset="50%" text-anchor="middle">
-                                WanderLust
-                            </textPath>
-                        </text>
-
-                        <!-- compass (moved up + slightly smaller feel) -->
-                        <g transform="translate(350 140)">
-
-                            <!-- main points -->
-                            <path d="M0 -28 L6 -9 L0 -2 L-6 -9 Z" fill="currentColor" opacity="0.85" />
-                            <path d="M28 0 L9 6 L2 0 L9 -6 Z" fill="currentColor" opacity="0.6" />
-                            <path d="M0 28 L5 9 L0 2 L-5 9 Z" fill="currentColor" opacity="0.4" />
-                            <path d="M-28 0 L-9 6 L-2 0 L-9 -6 Z" fill="currentColor" opacity="0.7" />
-
-                            <!-- diagonals -->
-                            <path d="M16 -16 L7 -6 L4 -4 L6 -7 Z" fill="currentColor" opacity="0.5" />
-                            <path d="M16 16 L7 6 L4 4 L6 7 Z" fill="currentColor" opacity="0.35" />
-                            <path d="M-16 16 L-7 6 L-4 4 L-6 7 Z" fill="currentColor" opacity="0.5" />
-                            <path d="M-16 -16 L-7 -6 L-4 -4 L-6 -7 Z" fill="currentColor" opacity="0.35" />
-
-                            <!-- center -->
-                            <circle cx="0" cy="0" r="3.5" fill="currentColor" />
-                            <circle cx="0" cy="0" r="10" fill="none" stroke="currentColor" stroke-opacity="0.3"
-                                stroke-width="1" />
-
-                            <!-- WEST -->
-                            <text x="-60" y="4" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif"
-                                font-size="14" fill="currentColor" opacity="0.7" letter-spacing="1">
-                                explore
-                            </text>
-
-                            <!-- EAST -->
-                            <text x="60" y="4" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif"
-                                font-size="14" fill="currentColor" opacity="0.7" letter-spacing="1">
-                                discover
-                            </text>
-
-                            <!-- SOUTH -->
-                            <text x="0" y="50" text-anchor="middle" font-family="'Trebuchet MS', Arial, sans-serif"
-                                font-size="14" fill="currentColor" opacity="0.7" letter-spacing="1">
-                                wonder
-                            </text>
-
-                        </g>
-                    </svg></div>
-
-                <div class="theme-toggle-wrap d-flex align-items-center gap-2">
+                <div class="theme-toggle-wrap d-flex align-items-center gap-2 ms-auto">
                     <i class="bi bi-sun-fill theme-icon"></i>
 
                     <div class="form-check form-switch m-0">
@@ -106,37 +44,43 @@
    
     <main id="onLoadLayout">
         <!-- Search and filter bars-->
-        <div class="container pb-3">
-            <div class="row g-2 align-items-center">
+       <div class="container pb-3">
+    <div class="row g-2 align-items-center">
 
-                <!-- Search field -->
-                <div class="col-md-9">
-                    <div class="input-group shadow-sm rounded">
-                        <span class="input-group-text">
-                            <i class="bi bi-search"></i>
-                        </span>
-                        <form id="searchForm">
-                            <input id="searchField" type="text" class="form-control"
-                                placeholder="Where to next? Search a country..." aria-label="Search for a country"
-                                id="searchInput">
-                        </form>
-                    </div>
+        <!-- Search field -->
+        <div class="col-md-9">
+            <form id="searchForm">
+                <div class="input-group shadow-sm rounded">
+
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+
+                    <input id="searchField" type="text" class="form-control"
+                        placeholder="Search a country..."
+                        aria-label="Search for a country">
+
+                    <button class="btn btn-secondary" type="submit">
+                        Search
+                    </button>
                 </div>
-
-                <!-- Filter dropdown -->
-                <div class="col-md-3">
-                    <select class="form-select shadow-sm" id="regionFilter" aria-label="Filter by region">
-
-                        <option selected value="">Filter by region</option>
-                        <option value="africa">Africa</option>
-                        <option value="americas">Americas</option>
-                        <option value="asia">Asia</option>
-                        <option value="europe">Europe</option>
-                        <option value="oceania">Oceania</option>
-                    </select>
-                </div>
-            </div>
+            </form>
         </div>
+
+        <!-- Filter dropdown -->
+        <div class="col-md-3">
+            <select class="form-select shadow-sm" id="regionFilter">
+                <option selected value="">Filter by region</option>
+                <option value="africa">Africa</option>
+                <option value="americas">Americas</option>
+                <option value="asia">Asia</option>
+                <option value="europe">Europe</option>
+                <option value="oceania">Oceania</option>
+            </select>
+        </div>
+
+    </div>
+</div>
 
 
         <!--Rows and columns for country info-->

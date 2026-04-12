@@ -19,17 +19,6 @@ async function getSearchCountry(name) {
     // Otherwise, good to go with output
     // Clear any previous content
     newPage.innerHTML = "";
-    // Create Back button
-    const backButton = document.createElement("div");
-    backButton.textContent = "← Back";
-    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
-    // Add back button event listener
-    backButton.addEventListener("click", async () => {
-        newPage.classList.add("d-none");
-        homePage.classList.remove("d-none");
-    });
-    // Append button to page
-    newPage.appendChild(backButton);
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3");
@@ -120,9 +109,13 @@ async function getSearchCountry(name) {
         const borderResponse = await fetch(`https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`);
         const borderData = await borderResponse.json();
         borderData.forEach((country) => {
-            const borderItem = document.createElement("span");
+            const borderItem = document.createElement("button");
             borderItem.classList.add("border", "rounded", "px-2", "py-1");
             borderItem.textContent = country.name.common;
+            // Create on click listener for each country
+            borderItem.addEventListener("click", () => {
+                getSearchCountry(country.name.common);
+            });
             borderWrap.appendChild(borderItem);
         });
     }

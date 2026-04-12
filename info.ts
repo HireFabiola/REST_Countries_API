@@ -29,14 +29,6 @@ async function getSearchCountry(name: string) {
     // Clear any previous content
     newPage.innerHTML = "";
 
-    // Create Back button
-    const backButton = document.createElement("div");
-    backButton.textContent = "← Back";
-    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
-
-    // Append button to page
-    newPage.appendChild(backButton);
-
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3");
@@ -153,10 +145,15 @@ async function getSearchCountry(name: string) {
         const borderData = await borderResponse.json();
 
         borderData.forEach((country: any) => {
-            const borderItem = document.createElement("span");
+            const borderItem = document.createElement("button");
             borderItem.classList.add("border", "rounded", "px-2", "py-1");
 
             borderItem.textContent = country.name.common;
+
+            // Create on click listener for each country
+            borderItem.addEventListener("click", () => {
+                getSearchCountry(country.name.common);
+            });
 
             borderWrap.appendChild(borderItem);
         });
