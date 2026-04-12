@@ -23,7 +23,7 @@ async function showBorderCountryHover(countryName, anchor) {
     hoverCard.classList.add("country-hover-card");
     hoverCard.innerHTML = `
         <div class="fw-bold mb-2">${country.name.common}</div>
-        <img src="${country.flags.svg}" alt="${country.name.common}" class="img-fluid border rounded mb-2">
+        <img src="${country.flags.svg}" alt="${country.name.common}" class="border rounded mb-2">
         <p class="mb-1"><strong>Capital:</strong> ${country.capital?.[0] ?? "N/A"}</p>
         <p class="mb-1"><strong>Region:</strong> ${country.region}</p>
         <p class="mb-0"><strong>Population:</strong> ${country.population.toLocaleString()}</p>
@@ -44,11 +44,14 @@ function clearContainer(container) {
 }
 // Helper function to create country card image
 function createCountryImage(country) {
+    const imgWrapper = document.createElement("div");
+    imgWrapper.classList.add("flag-wrapper");
     const img = document.createElement("img");
     img.src = country.flags.svg;
     img.alt = country.name.common;
-    img.classList.add("img-fluid", "border", "rounded");
-    return img;
+    img.classList.add("flag-img");
+    imgWrapper.appendChild(img);
+    return imgWrapper;
 }
 // Helper function to create country card name
 function createCountryName(country) {
@@ -79,7 +82,7 @@ function createCountryPopulation(country) {
 function createCountryCard(country, clickHandler) {
     // Create columns
     const col = document.createElement("div");
-    col.classList.add("col-3", "border", "rounded", "p-2", "shadow-sm");
+    col.classList.add("border", "rounded", "p-2", "shadow-sm");
     col.addEventListener("click", clickHandler);
     // Flag
     const img = createCountryImage(country);
@@ -107,7 +110,7 @@ function renderCountryCards(countryList, clickHandlerBuilder) {
     clearContainer(container);
     for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
-        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "p-2", "shadow-sm");
+        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
         container.appendChild(col);
     }
 }
@@ -132,7 +135,7 @@ function createSearchLeftColumn(searchedCountry) {
     const img = document.createElement("img");
     img.src = searchedCountry.flags.svg;
     img.alt = searchedCountry.name.common;
-    img.classList.add("img-fluid", "border", "rounded");
+    img.classList.add("flag-img", "border", "rounded");
     img.style.objectFit = "cover";
     // Append image to left column
     leftCol.appendChild(img);
@@ -277,14 +280,17 @@ async function createSearchRightColumn(searchedCountry) {
     return rightCol;
 }
 // Helper function to render searched country detail layout
-async function renderSearchCountryLayout(searchedCountry, homePage, newPage) {
+export async function renderSearchCountryLayout(searchedCountry, homePage, newPage) {
     // Clear any previous content
     newPage.innerHTML = "";
     // Create container for formatting consistency across pages
     const container = document.createElement("div");
     container.classList.add("container", "py-3");
-    const backButton = createBackButton(homePage, newPage);
-    container.appendChild(backButton);
+    // Only if on main page, otherwise not needed for new window
+    if (document.getElementById("countryFlags")) {
+        const backButton = createBackButton(homePage, newPage);
+        container.appendChild(backButton);
+    }
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3", "align-items-stretch");
@@ -305,17 +311,22 @@ const logos = {
 function applyTheme(theme) {
     root.setAttribute("data-bs-theme", theme);
     localStorage.setItem("theme", theme);
-    // checked = DARK mode (your current logic)
-    themeToggle.checked = theme === "dark";
-    logo.src = logos[theme];
+    if (themeToggle) {
+        themeToggle.checked = theme === "dark";
+    }
+    if (logo) {
+        logo.src = logos[theme];
+    }
 }
 // Default to light on first load
 const savedTheme = localStorage.getItem("theme") || "light";
 applyTheme(savedTheme);
-themeToggle.addEventListener("change", () => {
-    const newTheme = themeToggle.checked ? "dark" : "light";
-    applyTheme(newTheme);
-});
+if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+        const newTheme = themeToggle.checked ? "dark" : "light";
+        applyTheme(newTheme);
+    });
+}
 // Add event listener for filter
 filterDD?.addEventListener("change", handleChange);
 // Add event listener for searcgh field
@@ -359,24 +370,68 @@ async function getCountryInfo() {
         };
     });
 }
-async function getSearchCountry(name) {
-    const dataPull = await fetch(`https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`);
-    const result = await dataPull.json();
-    const searchedCountry = result[0];
-    const homePage = document.getElementById("onLoadLayout");
-    const newPage = document.getElementById("newLayout");
-    if (!homePage || !newPage)
-        return;
-    // Hide main page visibility and enable newLayout visibility
-    homePage.classList.add("d-none");
-    newPage.classList.remove("d-none");
-    if (!searchedCountry) {
-        console.error("Country not found");
-        return;
+export async function getSearchCountry(name) {
+    try {
+        const dataPull = await fetch(`https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`);
+        if (!dataPull.ok) {
+            throw new Error("Country not found");
+        }
+        const result = await dataPull.json();
+        const searchedCountry = result[0];
+        const homePage = document.getElementById("onLoadLayout");
+        const newPage = document.getElementById("newLayout");
+        if (!homePage || !newPage)
+            return;
+        // Hide main page visibility and enable newLayout visibility
+        homePage.classList.add("d-none");
+        newPage.classList.remove("d-none");
+        if (!searchedCountry) {
+            console.error("Country not found");
+            return;
+        }
+        // Otherwise, good to go with output
+        await renderSearchCountryLayout(searchedCountry, homePage, newPage);
     }
-    // Otherwise, good to go with output
-    await renderSearchCountryLayout(searchedCountry, homePage, newPage);
+    catch (error) {
+        console.log("Search: error:", error);
+        showErrorMessage("Country not found.  Please ensure you are typing the name of an actual country");
+    }
+}
+function showErrorMessage(message) {
+    const container = document.getElementById("countryFlags");
+    if (!container)
+        return;
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-danger text-center">
+                ${message}
+            </div>
+        </div>
+    `;
 }
 getCountryInfo();
-export {};
+function saveUserProfile(profile) {
+    localStorage.setItem("wanderlustUser", JSON.stringify(profile));
+}
+function getUserProfile() {
+    const raw = localStorage.getItem("wanderlustUser");
+    return raw ? JSON.parse(raw) : null;
+}
+function renderTravelCounter(totalCountries) {
+    const counter = document.getElementById("travelCounter");
+    const user = getUserProfile();
+    if (!counter || !user)
+        return;
+    const username = user.name;
+    const visited = user.visitedCountries.length;
+    const total = totalCountries;
+    const percent = total > 0
+        ? ((visited / total) * 100).toFixed(1)
+        : "0";
+    counter.innerHTML = `
+        <strong>${username}</strong>, you've explored 
+        <strong>${visited}</strong> of <strong>${total}</strong> countries — 
+        <strong>${percent}%</strong> of the world!
+    `;
+}
 //# sourceMappingURL=main.js.map

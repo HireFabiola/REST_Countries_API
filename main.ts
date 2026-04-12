@@ -57,7 +57,7 @@ async function showBorderCountryHover(
 
     hoverCard.innerHTML = `
         <div class="fw-bold mb-2">${country.name.common}</div>
-        <img src="${country.flags.svg}" alt="${country.name.common}" class="img-fluid border rounded mb-2">
+        <img src="${country.flags.svg}" alt="${country.name.common}" class="border rounded mb-2">
         <p class="mb-1"><strong>Capital:</strong> ${country.capital?.[0] ?? "N/A"}</p>
         <p class="mb-1"><strong>Region:</strong> ${country.region}</p>
         <p class="mb-0"><strong>Population:</strong> ${country.population.toLocaleString()}</p>
@@ -84,12 +84,17 @@ function clearContainer(container: HTMLElement): void {
 }
 
 // Helper function to create country card image
-function createCountryImage(country: Country): HTMLImageElement {
+function createCountryImage(country: Country): HTMLDivElement {
+    const imgWrapper = document.createElement("div");
+    imgWrapper.classList.add("flag-wrapper");
+
     const img = document.createElement("img");
     img.src = country.flags.svg;
     img.alt = country.name.common;
-    img.classList.add("img-fluid", "border", "rounded");
-    return img;
+    img.classList.add("flag-img");
+
+    imgWrapper.appendChild(img);
+    return imgWrapper;
 }
 
 // Helper function to create country card name
@@ -128,8 +133,8 @@ function createCountryCard(
 ): HTMLDivElement {
     // Create columns
     const col = document.createElement("div");
-    col.classList.add("col-3", "border", "rounded", "p-2", "shadow-sm");
-
+    col.classList.add("border", "rounded", "p-2", "shadow-sm");
+    
     col.addEventListener("click", clickHandler);
 
     // Flag
@@ -170,7 +175,7 @@ function renderCountryCards(
 
     for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
-        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "p-2", "shadow-sm");
+        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
         container.appendChild(col);
     }
 }
@@ -200,7 +205,7 @@ function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
     const img = document.createElement("img");
     img.src = searchedCountry.flags.svg;
     img.alt = searchedCountry.name.common;
-    img.classList.add("img-fluid", "border", "rounded");
+    img.classList.add("flag-img", "border", "rounded");
     img.style.objectFit = "cover";
 
     // Append image to left column
@@ -571,3 +576,38 @@ function showErrorMessage(message: string) {
 }
 
 getCountryInfo();
+
+type UserProfile = {
+    name: string;
+    visitedCountries: string[];
+};
+
+function saveUserProfile(profile: UserProfile): void {
+    localStorage.setItem("wanderlustUser", JSON.stringify(profile));
+}
+
+function getUserProfile(): UserProfile | null {
+    const raw = localStorage.getItem("wanderlustUser");
+    return raw ? JSON.parse(raw) as UserProfile : null;
+}
+
+function renderTravelCounter(totalCountries: number): void {
+    const counter = document.getElementById("travelCounter");
+    const user = getUserProfile();
+
+    if (!counter || !user) return;
+
+    const username = user.name;
+    const visited = user.visitedCountries.length;
+    const total = totalCountries;
+
+    const percent = total > 0
+        ? ((visited / total) * 100).toFixed(1)
+        : "0";
+
+    counter.innerHTML = `
+        <strong>${username}</strong>, you've explored 
+        <strong>${visited}</strong> of <strong>${total}</strong> countries — 
+        <strong>${percent}%</strong> of the world!
+    `;
+}
