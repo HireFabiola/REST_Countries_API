@@ -170,20 +170,20 @@ function renderCountryCards(
 
     for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
-        col.classList.add("col-12", "col-md-6",  "col-lg-3",  "border","rounded", "p-2", "shadow-sm");
+        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "p-2", "shadow-sm");
         container.appendChild(col);
     }
 }
 // Helper function to create back button
 function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivElement {
-     
+
     // Create Back button
     const backButton = document.createElement("div");
     backButton.textContent = "← Back";
     backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
 
     // Add back button event listener
-   backButton.addEventListener("click", async () => {
+    backButton.addEventListener("click", async () => {
         newPage.classList.add("d-none");
         homePage.classList.remove("d-none");
     });
@@ -406,10 +406,10 @@ export async function renderSearchCountryLayout(
 
     // Only if on main page, otherwise not needed for new window
     if (document.getElementById("countryFlags")) {
-    const backButton = createBackButton(homePage, newPage);
-    container.appendChild(backButton);
+        const backButton = createBackButton(homePage, newPage);
+        container.appendChild(backButton);
     }
-    
+
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3", "align-items-stretch");
@@ -454,11 +454,11 @@ const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
 
 applyTheme(savedTheme);
 
-if (themeToggle){
-themeToggle.addEventListener("change", () => {
-    const newTheme: Theme = themeToggle.checked ? "dark" : "light";
-    applyTheme(newTheme);
-});
+if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+        const newTheme: Theme = themeToggle.checked ? "dark" : "light";
+        applyTheme(newTheme);
+    });
 }
 
 // Add event listener for filter
@@ -523,29 +523,51 @@ async function getCountryInfo() {
 }
 
 export async function getSearchCountry(name: string) {
-    const dataPull = await fetch(
-        `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
-    );
+    try {
+        const dataPull = await fetch(
+            `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
+        );
+        if (!dataPull.ok) {
+            throw new Error("Country not found")
+        }
 
-    const result: Country[] = await dataPull.json();
-    const searchedCountry: Country | undefined = result[0];
+        const result: Country[] = await dataPull.json();
+        const searchedCountry: Country | undefined = result[0];
 
-    const homePage = document.getElementById("onLoadLayout");
-    const newPage = document.getElementById("newLayout");
+        const homePage = document.getElementById("onLoadLayout");
+        const newPage = document.getElementById("newLayout");
 
-    if (!homePage || !newPage) return;
+        if (!homePage || !newPage) return;
 
-    // Hide main page visibility and enable newLayout visibility
-    homePage.classList.add("d-none");
-    newPage.classList.remove("d-none");
+        // Hide main page visibility and enable newLayout visibility
+        homePage.classList.add("d-none");
+        newPage.classList.remove("d-none");
 
 
-    if (!searchedCountry) {
-        console.error("Country not found");
-        return;
+        if (!searchedCountry) {
+            console.error("Country not found");
+            return;
+        }
+        // Otherwise, good to go with output
+        await renderSearchCountryLayout(searchedCountry, homePage, newPage);
+    } catch (error) {
+        console.log("Search: error:", error);
+        showErrorMessage("Country not found.  Please ensure you are typing the name of an actual country")
     }
-    // Otherwise, good to go with output
-    await renderSearchCountryLayout(searchedCountry, homePage, newPage);
+}
+
+function showErrorMessage(message: string) {
+    const container = document.getElementById("countryFlags");
+
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-danger text-center">
+                ${message}
+            </div>
+        </div>
+    `;
 }
 
 getCountryInfo();
