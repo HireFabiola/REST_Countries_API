@@ -8,3 +8,4 @@ if (countryName) {
 } else {
     console.error("No country provided in URL");
 }
+

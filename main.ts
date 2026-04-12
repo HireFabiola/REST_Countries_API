@@ -176,13 +176,14 @@ function renderCountryCards(
 }
 // Helper function to create back button
 function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivElement {
+     
     // Create Back button
     const backButton = document.createElement("div");
     backButton.textContent = "← Back";
     backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
 
     // Add back button event listener
-    backButton.addEventListener("click", async () => {
+   backButton.addEventListener("click", async () => {
         newPage.classList.add("d-none");
         homePage.classList.remove("d-none");
     });
@@ -403,9 +404,12 @@ export async function renderSearchCountryLayout(
     const container = document.createElement("div");
     container.classList.add("container", "py-3");
 
+    // Only if on main page, otherwise not needed for new window
+    if (document.getElementById("countryFlags")) {
     const backButton = createBackButton(homePage, newPage);
     container.appendChild(backButton);
-
+    }
+    
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3", "align-items-stretch");
