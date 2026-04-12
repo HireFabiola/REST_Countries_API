@@ -391,7 +391,7 @@ async function createSearchRightColumn(searchedCountry: Country): Promise<HTMLDi
 }
 
 // Helper function to render searched country detail layout
-async function renderSearchCountryLayout(
+export async function renderSearchCountryLayout(
     searchedCountry: Country,
     homePage: HTMLElement,
     newPage: HTMLElement
