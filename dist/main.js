@@ -84,8 +84,12 @@ function createCountryCard(country, clickHandler) {
     const col = document.createElement("div");
     col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
     col.addEventListener("click", clickHandler);
-    // Add visited/ toggle icon to each card
-    const visitedToggle = createVisitedToggle(country);
+    // Add visited/ toggle icon to each card if user is logged in
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const visitedToggle = createVisitedToggle(country);
+        col.appendChild(visitedToggle);
+    }
     // Flag
     const img = createCountryImage(country);
     // Name
@@ -97,8 +101,6 @@ function createCountryCard(country, clickHandler) {
     //  Population
     const population = createCountryPopulation(country);
     // Append everything to column
-    col.appendChild(visitedToggle);
-    col.appendChild(img);
     col.appendChild(img);
     col.appendChild(name);
     col.appendChild(capital);
@@ -222,11 +224,18 @@ function createBorderCountryButton(country) {
     borderItem.type = "button";
     borderItem.textContent = country.name.common;
     borderItem.classList.add("btn", "btn-outline-primary", "btn-sm");
+    // 🔹 Hover (already working)
     borderItem.addEventListener("mouseenter", async () => {
         await showBorderCountryHover(country.name.common, borderItem);
     });
     borderItem.addEventListener("mouseleave", () => {
         removeHoverCard();
+    });
+    // 🔥 NEW: Click → go to info page
+    borderItem.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const countryName = encodeURIComponent(country.name.common);
+        window.open(`info.html?country=${countryName}`, "_blank");
     });
     return borderItem;
 }
@@ -335,18 +344,62 @@ if (themeToggle) {
 filterDD?.addEventListener("change", handleChange);
 // Add event listener for searcgh field
 searchForm?.addEventListener("submit", handleSubmit);
+function showVisitedCountries() {
+    const user = getLoggedInRegisteredUser();
+    const container = getCountryFlagsContainer();
+    if (!container)
+        return;
+    // Not logged in
+    if (!user) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    Log in to view your visited countries.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    const visitedNames = user.visitedCountries;
+    // No visited countries yet
+    if (visitedNames.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    You haven't marked any countries as visited yet.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    const containerChildren = Array.from(container.children);
+    containerChildren.forEach(card => {
+        const countryName = card.querySelector("h6")?.textContent;
+        if (countryName && visitedNames.includes(countryName)) {
+            card.style.display = "block";
+        }
+        else {
+            card.style.display = "none";
+        }
+    });
+}
 // Function to handle selected filter option
 async function handleChange(event) {
-    // Get selected region to use in region API
     const selectedRegion = filterDD.value;
-    console.log(selectedRegion);
+    if (selectedRegion === "visited") {
+        showVisitedCountries();
+        return;
+    }
+    if (!selectedRegion) {
+        await getCountryInfo();
+        return;
+    }
     const pullData = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
     const result = await pullData.json();
     renderCountryCards(result, (country) => {
         return () => {
-            console.log("I am here");
             const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `detail.html?country=${countryName}`;
+            window.location.href = `info.html?country=${countryName}`;
         };
     });
 }
@@ -373,6 +426,7 @@ async function getCountryInfo() {
             console.log(countryName);
         };
     });
+    renderTravelCounter(result.length);
 }
 export async function getSearchCountry(name) {
     try {
@@ -413,14 +467,18 @@ function showErrorMessage(message) {
         </div>
     `;
 }
-getCountryInfo();
 function renderTravelCounter(totalCountries) {
     const counter = document.getElementById("travelCounter");
     const user = getLoggedInRegisteredUser();
     if (!counter)
         return;
     if (!user) {
-        counter.textContent = "";
+        counter.innerHTML = `
+            <div class="text-center">
+                <div class="fw-bold">Because we know all who wander... 🌍</div>
+                <div>Log in or register to track the countries you've explored.</div>
+            </div>
+        `;
         return;
     }
     const username = user.name;
@@ -429,12 +487,13 @@ function renderTravelCounter(totalCountries) {
         ? ((visited / totalCountries) * 100).toFixed(1)
         : "0";
     counter.innerHTML = `
-    <div class="text-center">
-        <div>You’ve explored <strong>${visited}</strong> countries</div>
-        <div><strong>${percent}%</strong> of the globe 🌍</div>
-        <div class="mt-1">Where will your next adventure be?✈️</div>
-    </div>
-`;
+        <div class="text-center">
+            <div>Welcome <strong>${username}</strong>! </div>
+            <div>You’ve explored <strong>${visited}</strong> countries</div>
+            <div><strong>${percent}%</strong> of the globe 🌍</div>
+            <div class="mt-1">Where will your next adventure be?✈️</div>
+        </div>
+    `;
 }
 function getRegisteredUsers() {
     const raw = localStorage.getItem("wanderlustUsers");
@@ -452,6 +511,7 @@ function saveCurrentUser(user) {
 }
 function clearCurrentUser() {
     localStorage.removeItem("wanderlustCurrentUser");
+    sessionStorage.removeItem("wanderlustCurrentUser");
 }
 function setMessage(elementId, message, isError = true) {
     const el = document.getElementById(elementId);
@@ -526,6 +586,9 @@ function initAuth() {
             saveCurrentUser({ name, email });
             setMessage("registerMessage", "Registration successful.", false);
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
+            renderVisitedFilter();
             registerForm.reset();
             setTimeout(() => closeAuthModal(), 500);
         });
@@ -552,6 +615,9 @@ function initAuth() {
             saveCurrentUser({ name: user.name, email: user.email });
             setMessage("loginMessage", "Login successful.", false);
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
+            renderVisitedFilter();
             loginForm.reset();
             setTimeout(() => closeAuthModal(), 500);
         });
@@ -561,16 +627,21 @@ function initAuth() {
             event.preventDefault();
             clearCurrentUser();
             updateAuthUI();
+            updateSearchPlaceholder();
+            getCountryInfo();
+            renderVisitedFilter();
         });
     }
     updateAuthUI();
+    updateSearchPlaceholder();
 }
 function updateSearchPlaceholder() {
     const user = getCurrentUser(); // or getLoggedInRegisteredUser()
+    console.log("I am in placeholer function", user);
     if (!searchInput)
         return;
     if (user) {
-        searchInput.placeholder = `Pack your bags ${user.name}! Where to next... `;
+        searchInput.placeholder = `Pack your bags! Where to next... `;
     }
     else {
         searchInput.placeholder = "Search a country...";
@@ -637,9 +708,39 @@ function createVisitedToggle(country) {
         toggleVisitedCountry(country.name.common);
         updateVisitedButtonState(button, country.name.common);
         updateTravelCounterFromStoredCountries();
+        renderVisitedFilter();
     });
     return button;
 }
+function renderVisitedFilter() {
+    const container = document.getElementById("visitedFilterContainer");
+    if (!container)
+        return;
+    const user = getLoggedInRegisteredUser();
+    container.innerHTML = "";
+    if (!user || user.visitedCountries.length === 0) {
+        return;
+    }
+    let showingVisited = false;
+    const button = document.createElement("button");
+    button.classList.add("btn", "btn-outline-success", "btn-sm");
+    button.textContent = `Visited (${user.visitedCountries.length})`;
+    button.addEventListener("click", () => {
+        showingVisited = !showingVisited;
+        if (showingVisited) {
+            button.textContent = "Show All";
+            showVisitedCountries();
+        }
+        else {
+            button.textContent = `Visited (${user.visitedCountries.length})`;
+            getCountryInfo();
+            renderVisitedFilter();
+        }
+    });
+    container.appendChild(button);
+}
 initAuth();
 updateSearchPlaceholder();
+getCountryInfo();
+renderVisitedFilter();
 //# sourceMappingURL=main.js.map

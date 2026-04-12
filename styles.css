@@ -20,6 +20,7 @@
   width: 3rem;
   height: 1.5rem;
 }
+
 /*
 Customization for logo
 .logo {
@@ -47,54 +48,93 @@ Customization for logo
 /* Customization for Login/Register Link */
 
 .login-link {
-    font-size: 0.9rem;
-    transition: opacity 0.2s ease;
+  font-size: 0.9rem;
+  transition: opacity 0.2s ease;
 }
 
 .login-link:hover {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 
 [data-bs-theme="dark"] .login-link {
-    color: #f8f9fa;
+  color: #f8f9fa;
 }
 
 [data-bs-theme="light"] .login-link {
-    color: #212529;
+  color: #212529;
 }
 
 .flag-wrapper {
-    width: 100%;
-    height: 180px;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .flag-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 0.375rem;
 }
 
 .travel-counter {
-    font-size: 0.95rem;
-    color: var(--bs-body-color);
-    line-height: 1.4;
-    max-width: 420px;
+  font-size: 0.95rem;
+  color: var(--bs-body-color);
+  line-height: 1.4;
+  max-width: 420px;
 }
 
 #searchField::placeholder {
-    color: #6c757d; /* Bootstrap's muted gray */
-    opacity: 1;     /* ensures consistent rendering across browsers */
+  color: #6c757d;
+  /* Bootstrap's muted gray */
+  opacity: 1;
+  /* ensures consistent rendering across browsers */
 }
 
 [data-bs-theme="light"] #searchField::placeholder {
-    color: #6c757d; /* darker gray for light mode */
+  color: #6c757d;
+  /* darker gray for light mode */
 }
 
 [data-bs-theme="dark"] #searchField::placeholder {
-    color: #adb5bd; /* lighter gray for dark mode */
+  color: #adb5bd;
+  /* lighter gray for dark mode */
+}
+
+#searchField::placeholder {
+  font-style: italic;
+  color: #6c757d;
+  opacity: 1;
+}
+
+.header-controls {
+    display: flex;
+    align-items: flex-end; /* key line */
+    gap: 1rem;
+}
+
+.auth-links {
+    margin-bottom: 2px; /* subtle nudge upward if needed */
+}
+
+.country-hover-card {
+  min-width: 240px;
+  max-width: 240px;
+}
+
+.country-hover-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+
+button {
+    cursor: pointer;
 }

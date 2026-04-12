@@ -318,12 +318,21 @@ function createBorderCountryButton(country: { name: { common: string } }): HTMLB
     borderItem.textContent = country.name.common;
     borderItem.classList.add("btn", "btn-outline-primary", "btn-sm");
 
+    // 🔹 Hover (already working)
     borderItem.addEventListener("mouseenter", async () => {
         await showBorderCountryHover(country.name.common, borderItem);
     });
 
     borderItem.addEventListener("mouseleave", () => {
         removeHoverCard();
+    });
+
+    // 🔥 NEW: Click → go to info page
+    borderItem.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        const countryName = encodeURIComponent(country.name.common);
+        window.open(`info.html?country=${countryName}`, "_blank");
     });
 
     return borderItem;
@@ -478,23 +487,74 @@ filterDD?.addEventListener("change", handleChange);
 // Add event listener for searcgh field
 searchForm?.addEventListener("submit", handleSubmit);
 
+function showVisitedCountries(): void {
+    const user = getLoggedInRegisteredUser();
+    const container = getCountryFlagsContainer();
+
+    if (!container) return;
+
+    // Not logged in
+    if (!user) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    Log in to view your visited countries.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const visitedNames = user.visitedCountries;
+
+    // No visited countries yet
+    if (visitedNames.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    You haven't marked any countries as visited yet.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const containerChildren = Array.from(container.children) as HTMLDivElement[];
+
+    containerChildren.forEach(card => {
+        const countryName = card.querySelector("h6")?.textContent;
+
+        if (countryName && visitedNames.includes(countryName)) {
+            (card as HTMLElement).style.display = "block";
+        } else {
+            (card as HTMLElement).style.display = "none";
+        }
+    });
+}
 // Function to handle selected filter option
 async function handleChange(event: Event) {
-    // Get selected region to use in region API
     const selectedRegion = filterDD.value;
-    console.log(selectedRegion);
+
+    if (selectedRegion === "visited") {
+        showVisitedCountries();
+        return;
+    }
+
+    if (!selectedRegion) {
+        await getCountryInfo();
+        return;
+    }
+
     const pullData = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
     const result: Country[] = await pullData.json();
 
     renderCountryCards(result, (country: Country) => {
         return () => {
-            console.log("I am here");
             const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `detail.html?country=${countryName}`;
+            window.location.href = `info.html?country=${countryName}`;
         };
     });
 }
-
 
 
 // Function to handle submit 
@@ -526,11 +586,11 @@ async function getCountryInfo() {
         return () => {
             // Add event listener for click to get more info on country
             const countryName = encodeURIComponent(country.name.common);
-
             window.open(`info.html?country=${countryName}`, "_blank");
             console.log(countryName);
         };
     });
+    renderTravelCounter(result.length);
 }
 
 export async function getSearchCountry(name: string) {
@@ -590,7 +650,7 @@ function renderTravelCounter(totalCountries: number): void {
     if (!user) {
         counter.innerHTML = `
             <div class="text-center">
-                <div class="fw-bold">Start your journey 🌍</div>
+                <div class="fw-bold">Because we know all who wander... 🌍</div>
                 <div>Log in or register to track the countries you've explored.</div>
             </div>
         `;
@@ -730,6 +790,7 @@ function initAuth(): void {
             updateAuthUI();
             updateSearchPlaceholder();
             getCountryInfo();
+            renderVisitedFilter();
             registerForm.reset();
 
             setTimeout(() => closeAuthModal(), 500);
@@ -769,6 +830,7 @@ function initAuth(): void {
             updateAuthUI();
             updateSearchPlaceholder();
             getCountryInfo();
+            renderVisitedFilter();
             loginForm.reset();
 
             setTimeout(() => closeAuthModal(), 500);
@@ -782,6 +844,7 @@ function initAuth(): void {
             updateAuthUI();
             updateSearchPlaceholder();
             getCountryInfo();
+            renderVisitedFilter();
         });
     }
 
@@ -796,7 +859,7 @@ function updateSearchPlaceholder(): void {
     if (!searchInput) return;
 
     if (user) {
-        searchInput.placeholder = `Pack your bags ${user.name}! Where to next... `;
+        searchInput.placeholder = `Pack your bags! Where to next... `;
     } else {
         searchInput.placeholder = "Search a country...";
     }
@@ -888,11 +951,48 @@ function createVisitedToggle(country: Country): HTMLButtonElement {
         toggleVisitedCountry(country.name.common);
         updateVisitedButtonState(button, country.name.common);
         updateTravelCounterFromStoredCountries();
+        renderVisitedFilter();
     });
 
     return button;
 }
 
+function renderVisitedFilter(): void {
+    const container = document.getElementById("visitedFilterContainer");
+    if (!container) return;
+
+    const user = getLoggedInRegisteredUser();
+
+    container.innerHTML = "";
+
+    if (!user || user.visitedCountries.length === 0) {
+        return;
+    }
+
+    let showingVisited = false;
+
+    const button = document.createElement("button");
+    button.classList.add("btn", "btn-outline-success", "btn-sm");
+    button.textContent = `Visited (${user.visitedCountries.length})`;
+
+    button.addEventListener("click", () => {
+        showingVisited = !showingVisited;
+
+        if (showingVisited) {
+            button.textContent = "Show All";
+            showVisitedCountries();
+        } else {
+            button.textContent = `Visited (${user.visitedCountries.length})`;
+            getCountryInfo();
+            renderVisitedFilter();
+        }
+    });
+
+    container.appendChild(button);
+}
+
+
 initAuth();
 updateSearchPlaceholder();
 getCountryInfo();
+renderVisitedFilter();
