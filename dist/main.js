@@ -107,6 +107,7 @@ function renderCountryCards(countryList, clickHandlerBuilder) {
     clearContainer(container);
     for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
+        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "p-2", "shadow-sm");
         container.appendChild(col);
     }
 }
@@ -278,8 +279,11 @@ async function createSearchRightColumn(searchedCountry) {
 async function renderSearchCountryLayout(searchedCountry, homePage, newPage) {
     // Clear any previous content
     newPage.innerHTML = "";
+    // Create container for formatting consistency across pages
+    const container = document.createElement("div");
+    container.classList.add("container", "py-3");
     const backButton = createBackButton(homePage, newPage);
-    newPage.appendChild(backButton);
+    container.appendChild(backButton);
     // Outermost row container
     const outerRow = document.createElement("div");
     outerRow.classList.add("row", "g-3");
@@ -288,8 +292,10 @@ async function renderSearchCountryLayout(searchedCountry, homePage, newPage) {
     // Assemble outer row
     outerRow.appendChild(leftCol);
     outerRow.appendChild(rightCol);
-    // Add to page
-    newPage.appendChild(outerRow);
+    // Add row to container
+    container.appendChild(outerRow);
+    // Add container to page
+    newPage.appendChild(container);
 }
 const logos = {
     dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",

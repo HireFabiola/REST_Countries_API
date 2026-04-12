@@ -170,10 +170,10 @@ function renderCountryCards(
 
     for (const country of countryList) {
         const col = createCountryCard(country, clickHandlerBuilder(country));
+        col.classList.add("col-12", "col-md-6",  "col-lg-3",  "border","rounded", "p-2", "shadow-sm");
         container.appendChild(col);
     }
 }
-
 // Helper function to create back button
 function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivElement {
     // Create Back button
