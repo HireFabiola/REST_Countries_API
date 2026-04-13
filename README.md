@@ -2,21 +2,8 @@ Frontend Mentor - REST Countries API with Color Theme Switcher Solution
 
 This is my adaptation of the REST Countries API with color theme switcher challenge on Frontend Mentor. I used this project to get more comfortable working with APIs, and building a clean, responsive UI.  While it was designed as a heavy in JavaScript challenge, I decided to challenge myself further and implement it with TypeScript.
 
-Table of contents
-Overview
-The Challenge
-Screenshot
-Links
-My Process
-Built With
-What I Learned
-Continued Development
-Useful Resources
-Author
-Overview
-The Challenge
-
-Users should be able to:
+Overview:
+We were tasked with making an app meeting the following requirements:
 See all countries from the API on the homepage
 Search for a country using an input field
 Filter countries by region
@@ -26,7 +13,7 @@ Toggle between light and dark mode
 This submission meets requirements to be an MVP.  The adaptation to the challenge, was my attempt to convert this REST API into a travel journal requiring additional implementation and a bit more extensive use of localStorage.
 
 Screenshot
-../images/screenshot...
+![REST Countries API application displaying a grid of country cards with flags, names, and statistics on a light-themed interface. The layout shows multiple country entries with flag images on the left and country information including population and region on the right. A search bar and region filter dropdown are visible at the top of the page, demonstrating the responsive design across desktop view.](images/Screenshot%202026-04-13%20at%203.42.38%20AM.png)
 
 Links
 Live Site URL: TBD
@@ -34,24 +21,19 @@ Live Site URL: TBD
 Built With
 Semantic HTML5 markup
 CSS custom properties
-Flexbox
 Bootstrap 5
-CSS Grid
 Mobile-first workflow
 TypeScript
 Styled Components
 
 What I Learned
-This project helped me get more comfortable with a few things:
-Working with API data and handling it cleanly with try catch blocks.
-Using TypeScript to add structure and catch errors earlier and understand compiler errors for debugging.
-Setting up dynamic routing elements using DOM objectst
-Really seeing the benefit of modularized code.  And buiolding 
-responsive  layout that works well across screen sizes.
+This project allowed me to deepen my understanding in several key areas. I gained hands-on experience working with API data, learning how to manage it effectively through structured error handling with try-catch blocks. I also strengthened my proficiency in TypeScript, using it to introduce greater structure, catch errors earlier, and more confidently interpret compiler feedback during debugging.
+In addition, I developed dynamic routing elements through DOM manipulation and began to appreciate the value of modularized code in building scalable and maintainable applications. While my implementation is not a perfect example of well-modularized code, the experience made it clear how much cleaner and more manageable the project would have been with stronger modularization from the start. Without taking the time to at least reorganize the code with clear sections and headers, it would have been far more difficult to read and follow.
+I also focused on creating a responsive layout that delivers a seamless experience across a variety of screen sizes.
+An unexpected but valuable discovery was the power of embedded SVG code. It gave me the ability to fine-tune visual elements with precision—especially when small alignment details weren’t quite right. As someone who notices even the slightest misalignment, having another tool to make those precise adjustments has been incredibly rewarding.
 
 
-
-
+interface Country{
   name: {
         common: string;
         official: string;
@@ -85,17 +67,15 @@ function createCountryImage(country: Country): HTMLDivElement {
 }
 
 
-Continued Development
-The app is a long way from finished.  I want to ultimately develop all functionalities I envision for a good comprehensive travel app.  I want to include a photo gallery and information about each contry perhaps tieing another API that renders unique information about every country.
+Future Features
+This application is still very much a work in progress, with significant opportunities for continued development and refinement. Looking ahead, I envision expanding the detailed country cards to include richer, more engaging content—potentially by integrating additional APIs that provide fun facts, cultural insights, or images of famous landmarks for each country. I would also like to incorporate a dedicated photo gallery and enhance the overall depth of information available for each destination.
+There are also some functional improvements to address, including resolving a few logic issues that currently impact the accuracy of the travel counter. From a user experience standpoint, I plan to ensure that all images—both thumbnails and flags—are dynamically resized to fit their containers while preserving their full visibility within the viewing window.
+Beyond technical enhancements, I see strong potential to evolve this into a more interactive and community-driven experience. I would like to make the app shareable among users, creating a “Wanderluster” community where individuals can track and compare their travel journeys. Introducing gamification elements—such as explorer titles or achievement tiers based on the percentage of the world a user has visited—could add a fun and motivating dimension to the app.
+On a personal development level, I aim to continue strengthening my proficiency in TypeScript until I reach true fluency. As I take on more complex projects, I recognize the importance of improving how I structure and modularize code, as well as how I manage application state. Building these skills will allow me to create more scalable, maintainable, and robust applications moving forward.
 
-Things I still want to improve on:
-I still want to improve on my knowledge of Typescript until I become fluent in it as a programmind language.  The more comfortable I become with advanced TypeScript patterns, the more robust my applications will be.  Knowing this doesn't scracth the surface of how complex an app can bem I must improve myability to organize files and import and export functions and utilities as needed.
-Improving how I manage state as apps get more complex
-
-Writing tests instead of just relying on manual testing
 Useful Resources
-
 https://www.typescriptlang.org/docs/
 https://styled-components.com/docs
+
 Author
 Name: Fabiola Aurelien
