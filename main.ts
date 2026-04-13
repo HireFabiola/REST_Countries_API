@@ -131,34 +131,28 @@ function createCountryCard(
     country: Country,
     clickHandler: () => void
 ): HTMLDivElement {
-    // Create columns
     const col = document.createElement("div");
     col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
 
     col.addEventListener("click", clickHandler);
 
-    // Add visited/ toggle icon to each card if user is logged in
     const currentUser = getCurrentUser();
     if (currentUser) {
         const visitedToggle = createVisitedToggle(country);
         col.appendChild(visitedToggle);
     }
-    // Flag
+
+    if (currentUser && isCountryVisited(country.name.common)) {
+        const photoButton = createPhotoUploadButton(country);
+        col.appendChild(photoButton);
+    }
+
     const img = createCountryImage(country);
-
-    // Name
     const name = createCountryName(country);
-
-    // Capital
     const capital = createCountryCapital(country);
-
-    // Region
     const region = createCountryRegion(country);
-
-    //  Population
     const population = createCountryPopulation(country);
 
-    // Append everything to column
     col.appendChild(img);
     col.appendChild(name);
     col.appendChild(capital);
@@ -167,6 +161,83 @@ function createCountryCard(
 
     return col;
 }
+function createPhotoUploadButton(country: Country): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("photo-upload-toggle", "btn", "btn-sm");
+    button.innerHTML = `<i class="bi bi-camera-fill"></i>`;
+    button.title = `Add photos for ${country.name.common}`;
+    button.setAttribute("aria-label", `Add photos for ${country.name.common}`);
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openPhotoPicker(country.name.common);
+    });
+
+    return button;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("File read failed"));
+
+        reader.readAsDataURL(file);
+    });
+}
+function openPhotoPicker(countryName: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+        alert("Please log in to add travel photos.");
+        return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
+
+    input.addEventListener("change", async () => {
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        for (const file of Array.from(files)) {
+            const imageDataUrl = await fileToDataUrl(file);
+            saveCountryPhoto(countryName, imageDataUrl);
+        }
+
+        getCountryInfo();
+    });
+
+    input.click();
+}
+
+function saveCountryPhoto(countryName: string, imageDataUrl: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    const users = getRegisteredUsers();
+    const user = users.find(
+        u => u.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+
+    if (!user) return;
+
+    if (!user.countryPhotos) {
+        user.countryPhotos = {};
+    }
+
+    if (!user.countryPhotos[countryName]) {
+        user.countryPhotos[countryName] = [];
+    }
+
+    user.countryPhotos[countryName].push(imageDataUrl);
+
+    saveRegisteredUsers(users);
+}
+
 
 // Helper function to render list of countries to page
 function renderCountryCards(
@@ -327,7 +398,7 @@ function createBorderCountryButton(country: { name: { common: string } }): HTMLB
         removeHoverCard();
     });
 
-    // 🔥 NEW: Click → go to info page
+    // Open in new window
     borderItem.addEventListener("click", (event) => {
         event.stopPropagation();
 
@@ -650,7 +721,7 @@ function renderTravelCounter(totalCountries: number): void {
     if (!user) {
         counter.innerHTML = `
             <div class="text-center">
-                <div class="fw-bold">Because we know all who wander... 🌍</div>
+                <div class="fw-bold">Because all who wander... 🌍</div>
                 <div>Log in or register to track the countries you've explored.</div>
             </div>
         `;
@@ -678,6 +749,7 @@ type RegisteredUser = {
     email: string;
     password: string;
     visitedCountries: string[];
+    countryPhotos?: Record<string, string[]>;
 };
 
 type ActiveSession = {
