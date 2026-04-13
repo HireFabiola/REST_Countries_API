@@ -222,3 +222,35 @@ button {
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
+.country-card,
+.border-country-btn,
+.visited-toggle,
+.photo-upload-toggle,
+.journal-toggle,
+.back-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, outline-color 0.2s ease;
+}
+
+.country-card:hover,
+.country-card:focus-visible {
+  transform: translateY(-4px);
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+}
+
+.border-country-btn:hover,
+.border-country-btn:focus-visible,
+.visited-toggle:hover,
+.visited-toggle:focus-visible,
+.photo-upload-toggle:hover,
+.photo-upload-toggle:focus-visible,
+.journal-toggle:hover,
+.journal-toggle:focus-visible,
+.back-btn:hover,
+.back-btn:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
+
+.country-card:focus {
+  outline: none;
+}
