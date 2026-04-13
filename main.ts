@@ -1,11 +1,54 @@
+// =================================================================================
+//                                  DOM REFERENCES
+// =================================================================================
+// Root + Theme
 const root = document.documentElement;
 const themeToggle = document.getElementById("themeToggle") as HTMLInputElement | null;
-const searchForm = document.getElementById("searchForm") as HTMLFormElement;
-const searchInput = document.getElementById("searchField") as HTMLInputElement;
-const filterDD = document.getElementById("regionFilter") as HTMLInputElement;
 const logo = document.getElementById("logoImage") as HTMLImageElement | null;
 
-// Interface for country data returned from REST Countries API
+// Search + Filters
+const searchForm = document.getElementById("searchForm") as HTMLFormElement | null;
+const searchInput = document.getElementById("searchField") as HTMLInputElement | null;
+const filterDD = document.getElementById("regionFilter") as HTMLSelectElement | null;
+
+// Layout Containers
+const countryContainer = document.getElementById("countryFlags") as HTMLElement | null;
+const homePage = document.getElementById("onLoadLayout") as HTMLElement | null;
+const newPage = document.getElementById("newLayout") as HTMLElement | null;
+
+// Header / UI Elements
+const travelCounter = document.getElementById("travelCounter") as HTMLElement | null;
+const visitedFilterContainer = document.getElementById("visitedFilterContainer") as HTMLElement | null;
+
+// Auth Elements
+const authLink = document.getElementById("authLink") as HTMLAnchorElement | null;
+const logoutLink = document.getElementById("logoutLink") as HTMLAnchorElement | null;
+
+// Forms
+const loginForm = document.getElementById("loginForm") as HTMLFormElement | null;
+const registerForm = document.getElementById("registerForm") as HTMLFormElement | null;
+
+// Form Inputs (Login)
+const loginEmail = document.getElementById("loginEmail") as HTMLInputElement | null;
+const loginPassword = document.getElementById("loginPassword") as HTMLInputElement | null;
+
+// Form Inputs (Register)
+const registerName = document.getElementById("registerName") as HTMLInputElement | null;
+const registerEmail = document.getElementById("registerEmail") as HTMLInputElement | null;
+const registerPassword = document.getElementById("registerPassword") as HTMLInputElement | null;
+
+// Message Areas
+const loginMessage = document.getElementById("loginMessage") as HTMLElement | null;
+const registerMessage = document.getElementById("registerMessage") as HTMLElement | null;
+
+// Modal
+const authModal = document.getElementById("authModal") as HTMLElement | null;
+
+// =================================================================================
+//                                  DATA TYPES
+// =================================================================================
+
+// Country data from REST Countries API
 interface Country {
     name: {
         common: string;
@@ -27,723 +70,7 @@ interface Country {
     borders?: string[];
 }
 
-// Code for border countries hover cards
-let activeHoverCard: HTMLDivElement | null = null;
-
-function removeHoverCard(): void {
-    if (activeHoverCard) {
-        activeHoverCard.remove();
-        activeHoverCard = null;
-    }
-}
-
-async function showBorderCountryHover(
-    countryName: string,
-    anchor: HTMLElement
-): Promise<void> {
-    removeHoverCard();
-
-    const response = await fetch(
-        `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,capital,region,population,flags`
-    );
-
-    const result: Country[] = await response.json();
-    const country = result[0];
-
-    if (!country) return;
-
-    const hoverCard = document.createElement("div");
-    hoverCard.classList.add("country-hover-card");
-
-    hoverCard.innerHTML = `
-        <div class="fw-bold mb-2">${country.name.common}</div>
-        <img src="${country.flags.svg}" alt="${country.name.common}" class="border rounded mb-2">
-        <p class="mb-1"><strong>Capital:</strong> ${country.capital?.[0] ?? "N/A"}</p>
-        <p class="mb-1"><strong>Region:</strong> ${country.region}</p>
-        <p class="mb-0"><strong>Population:</strong> ${country.population.toLocaleString()}</p>
-    `;
-
-    document.body.appendChild(hoverCard);
-
-    const rect = anchor.getBoundingClientRect();
-
-    hoverCard.style.top = `${window.scrollY + rect.bottom + 8}px`;
-    hoverCard.style.left = `${window.scrollX + rect.left}px`;
-
-    activeHoverCard = hoverCard;
-}
-
-// Helper function to get container for country cards
-function getCountryFlagsContainer(): HTMLElement | null {
-    return document.getElementById("countryFlags");
-}
-
-// Helper function to clear previous results
-function clearContainer(container: HTMLElement): void {
-    container.innerHTML = "";
-}
-
-// Helper function to create country card image
-function createCountryImage(country: Country): HTMLDivElement {
-    const imgWrapper = document.createElement("div");
-    imgWrapper.classList.add("flag-wrapper");
-
-    const img = document.createElement("img");
-    img.src = country.flags.svg;
-    img.alt = country.name.common;
-    img.classList.add("flag-img");
-
-    imgWrapper.appendChild(img);
-    return imgWrapper;
-}
-
-// Helper function to create country card name
-function createCountryName(country: Country): HTMLHeadingElement {
-    const name = document.createElement("h6");
-    name.textContent = country.name.common;
-    name.classList.add("mt-2", "fw-bold");
-    return name;
-}
-
-// Helper function to create country card capital
-function createCountryCapital(country: Country): HTMLParagraphElement {
-    const capital = document.createElement("p");
-    capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
-    return capital;
-}
-
-// Helper function to create country card region
-function createCountryRegion(country: Country): HTMLParagraphElement {
-    const region = document.createElement("p");
-    region.textContent = `Region: ${country.region}`;
-    return region;
-}
-
-// Helper function to create country card population
-function createCountryPopulation(country: Country): HTMLParagraphElement {
-    const population = document.createElement("p");
-    population.textContent = `Population: ${country.population.toLocaleString()}`;
-    return population;
-}
-
-// Helper function to build reusable country card
-function createCountryCard(
-    country: Country,
-    clickHandler: () => void
-): HTMLDivElement {
-    const col = document.createElement("div");
-    col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
-
-    col.addEventListener("click", clickHandler);
-
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-        const visitedToggle = createVisitedToggle(country);
-        col.appendChild(visitedToggle);
-    }
-
-    if (currentUser && isCountryVisited(country.name.common)) {
-        const photoButton = createPhotoUploadButton(country);
-        col.appendChild(photoButton);
-    }
-
-    const img = createCountryImage(country);
-    const name = createCountryName(country);
-    const capital = createCountryCapital(country);
-    const region = createCountryRegion(country);
-    const population = createCountryPopulation(country);
-
-    col.appendChild(img);
-    col.appendChild(name);
-    col.appendChild(capital);
-    col.appendChild(region);
-    col.appendChild(population);
-
-    return col;
-}
-function createPhotoUploadButton(country: Country): HTMLButtonElement {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.classList.add("photo-upload-toggle", "btn", "btn-sm");
-    button.innerHTML = `<i class="bi bi-camera-fill"></i>`;
-    button.title = `Add photos for ${country.name.common}`;
-    button.setAttribute("aria-label", `Add photos for ${country.name.common}`);
-
-    button.addEventListener("click", (event) => {
-        event.stopPropagation();
-        openPhotoPicker(country.name.common);
-    });
-
-    return button;
-}
-
-function fileToDataUrl(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("File read failed"));
-
-        reader.readAsDataURL(file);
-    });
-}
-function openPhotoPicker(countryName: string): void {
-    const currentUser = getCurrentUser();
-    if (!currentUser) {
-        alert("Please log in to add travel photos.");
-        return;
-    }
-
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.multiple = true;
-
-    input.addEventListener("change", async () => {
-        const files = input.files;
-        if (!files || files.length === 0) return;
-
-        for (const file of Array.from(files)) {
-            const imageDataUrl = await fileToDataUrl(file);
-            saveCountryPhoto(countryName, imageDataUrl);
-        }
-
-        getCountryInfo();
-    });
-
-    input.click();
-}
-
-function saveCountryPhoto(countryName: string, imageDataUrl: string): void {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return;
-
-    const users = getRegisteredUsers();
-    const user = users.find(
-        u => u.email.toLowerCase() === currentUser.email.toLowerCase()
-    );
-
-    if (!user) return;
-
-    if (!user.countryPhotos) {
-        user.countryPhotos = {};
-    }
-
-    if (!user.countryPhotos[countryName]) {
-        user.countryPhotos[countryName] = [];
-    }
-
-    user.countryPhotos[countryName].push(imageDataUrl);
-
-    saveRegisteredUsers(users);
-}
-
-
-// Helper function to render list of countries to page
-function renderCountryCards(
-    countryList: Country[],
-    clickHandlerBuilder: (country: Country) => () => void
-): void {
-    const container = getCountryFlagsContainer();
-
-    if (!container) return;
-
-    clearContainer(container);
-
-    for (const country of countryList) {
-        const col = createCountryCard(country, clickHandlerBuilder(country));
-        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
-        container.appendChild(col);
-    }
-}
-// Helper function to create back button
-function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivElement {
-
-    // Create Back button
-    const backButton = document.createElement("div");
-    backButton.textContent = "← Back";
-    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
-
-    // Add back button event listener
-    backButton.addEventListener("click", async () => {
-        newPage.classList.add("d-none");
-        homePage.classList.remove("d-none");
-    });
-
-    return backButton;
-}
-
-// Helper function to create left flag column for search layout
-function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
-    // Left column for flag
-    const leftCol = document.createElement("div");
-    leftCol.classList.add("col-12", "col-lg-6", "d-flex", "justify-content-center", "align-items-center");
-
-    const img = document.createElement("img");
-    img.src = searchedCountry.flags.svg;
-    img.alt = searchedCountry.name.common;
-    img.classList.add("flag-img", "border", "rounded");
-    img.style.objectFit = "cover";
-
-    // Append image to left column
-    leftCol.appendChild(img);
-
-    return leftCol;
-}
-
-// Helper function to create top left detail section
-function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
-    // Left inner column
-    const topLeft = document.createElement("div");
-    topLeft.classList.add("col-12", "col-lg-6", "p-3");
-
-    // Sets country's name
-    const countryName = document.createElement("h4");
-    countryName.textContent = searchedCountry.name.common;
-
-    // Set country's native name
-    const nativeName = document.createElement("p");
-    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
-    console.log(searchedCountry.name.official);
-
-    // Set country's population
-    const population = document.createElement("p");
-    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
-
-    // Set country's region
-    const region = document.createElement("p");
-    region.textContent = `Region: ${searchedCountry.region}`;
-
-    // Set country's sub-region
-    const subRegion = document.createElement("p");
-    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
-
-    // Set country's capital
-    const capital = document.createElement("p");
-    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
-
-    topLeft.appendChild(countryName);
-    topLeft.appendChild(nativeName);
-    topLeft.appendChild(population);
-    topLeft.appendChild(region);
-    topLeft.appendChild(subRegion);
-    topLeft.appendChild(capital);
-
-    return topLeft;
-}
-
-// Helper function to create top right detail section
-function createTopRightDetails(searchedCountry: Country): HTMLDivElement {
-    // Top right inner column
-    const topRight = document.createElement("div");
-    topRight.classList.add("col-6", "p-3");
-
-    const tld = document.createElement("p");
-    tld.textContent = `Top Level Domain: ${searchedCountry.tld?.join(", ") ?? "N/A"}`;
-
-    const currencies = document.createElement("p");
-    const currencyList = searchedCountry.currencies
-        ? Object.values(searchedCountry.currencies)
-            .map((currency) => currency.name)
-            .join(", ")
-        : "N/A";
-    currencies.textContent = `Currencies: ${currencyList}`;
-
-    const languages = document.createElement("p");
-    const languageList = searchedCountry.languages
-        ? Object.values(searchedCountry.languages).join(", ")
-        : "N/A";
-    languages.textContent = `Languages: ${languageList}`;
-
-    topRight.appendChild(tld);
-    topRight.appendChild(currencies);
-    topRight.appendChild(languages);
-
-    return topRight;
-}
-
-// Helper function to create top section of search detail layout
-function createSearchTopSection(searchedCountry: Country): HTMLDivElement {
-    // Top row of right outer column
-    const topSection = document.createElement("div");
-    topSection.classList.add("p-3");
-    topSection.style.flex = "2";
-
-    const topRow = document.createElement("div");
-    topRow.classList.add("row", "g-3", "h-100");
-
-    const topLeft = createTopLeftDetails(searchedCountry);
-    const topRight = createTopRightDetails(searchedCountry);
-
-    topRow.appendChild(topLeft);
-    topRow.appendChild(topRight);
-    topSection.appendChild(topRow);
-
-    return topSection;
-}
-
-// Helper function to create border button
-function createBorderCountryButton(country: { name: { common: string } }): HTMLButtonElement {
-    const borderItem = document.createElement("button");
-    borderItem.type = "button";
-    borderItem.textContent = country.name.common;
-    borderItem.classList.add("btn", "btn-outline-primary", "btn-sm");
-
-    // 🔹 Hover (already working)
-    borderItem.addEventListener("mouseenter", async () => {
-        await showBorderCountryHover(country.name.common, borderItem);
-    });
-
-    borderItem.addEventListener("mouseleave", () => {
-        removeHoverCard();
-    });
-
-    // Open in new window
-    borderItem.addEventListener("click", (event) => {
-        event.stopPropagation();
-
-        const countryName = encodeURIComponent(country.name.common);
-        window.open(`info.html?country=${countryName}`, "_blank");
-    });
-
-    return borderItem;
-}
-
-// Helper function to create bottom section shell
-function createBottomSectionShell(): { bottomSection: HTMLDivElement; borderWrap: HTMLDivElement } {
-    // Bottom section of outer right column for border countries
-    const bottomSection = document.createElement("div");
-    bottomSection.classList.add("p-3");
-    bottomSection.style.flex = "1";
-
-    const borderTitle = document.createElement("p");
-    borderTitle.classList.add("fw-bold", "mb-2");
-    borderTitle.textContent = "Border Countries:";
-
-    const borderWrap = document.createElement("div");
-    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2");
-
-    bottomSection.appendChild(borderTitle);
-    bottomSection.appendChild(borderWrap);
-
-    return { bottomSection, borderWrap };
-}
-
-// Helper function to render border countries
-async function renderBorderCountries(
-    searchedCountry: Country,
-    borderWrap: HTMLDivElement
-): Promise<void> {
-    if (searchedCountry.borders && searchedCountry.borders.length > 0) {
-        const codes = searchedCountry.borders.join(",");
-
-        const borderResponse = await fetch(
-            `https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`
-        );
-
-        const borderData: { name: { common: string } }[] = await borderResponse.json();
-
-        borderData.forEach((country) => {
-            const borderItem = createBorderCountryButton(country);
-            borderWrap.appendChild(borderItem);
-        });
-
-    } else {
-        const noBorders = document.createElement("span");
-        noBorders.textContent = "None";
-        borderWrap.appendChild(noBorders);
-    }
-}
-
-// Helper function to create bottom section of search detail layout
-async function createSearchBottomSection(searchedCountry: Country): Promise<HTMLDivElement> {
-    const { bottomSection, borderWrap } = createBottomSectionShell();
-    await renderBorderCountries(searchedCountry, borderWrap);
-    return bottomSection;
-}
-
-// Helper function to create right column for search detail layout
-async function createSearchRightColumn(searchedCountry: Country): Promise<HTMLDivElement> {
-    // Right column containing nested rows and columns
-    const rightCol = document.createElement("div");
-    rightCol.classList.add("col-12", "col-md-6");
-
-    const rightColInner = document.createElement("div");
-    rightColInner.classList.add("d-flex", "flex-column", "h-100", "gap-3");
-
-    const topSection = createSearchTopSection(searchedCountry);
-    const bottomSection = await createSearchBottomSection(searchedCountry);
-
-    // Assemble right side
-    rightColInner.appendChild(topSection);
-    rightColInner.appendChild(bottomSection);
-    rightCol.appendChild(rightColInner);
-
-    return rightCol;
-}
-
-// Helper function to render searched country detail layout
-export async function renderSearchCountryLayout(
-    searchedCountry: Country,
-    homePage: HTMLElement,
-    newPage: HTMLElement
-): Promise<void> {
-    // Clear any previous content
-    newPage.innerHTML = "";
-
-    // Create container for formatting consistency across pages
-    const container = document.createElement("div");
-    container.classList.add("container", "py-3");
-
-    // Only if on main page, otherwise not needed for new window
-    if (document.getElementById("countryFlags")) {
-        const backButton = createBackButton(homePage, newPage);
-        container.appendChild(backButton);
-    }
-
-    // Outermost row container
-    const outerRow = document.createElement("div");
-    outerRow.classList.add("row", "g-3", "align-items-stretch");
-
-    const leftCol = createSearchLeftColumn(searchedCountry);
-    const rightCol = await createSearchRightColumn(searchedCountry);
-
-    // Assemble outer row
-    outerRow.appendChild(leftCol);
-    outerRow.appendChild(rightCol);
-
-    // Add row to container
-    container.appendChild(outerRow);
-
-    // Add container to page
-    newPage.appendChild(container);
-}
-
-type Theme = "dark" | "light";
-
-const logos: Record<Theme, string> = {
-    dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",
-    light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
-};
-
-
-function applyTheme(theme: Theme): void {
-    root.setAttribute("data-bs-theme", theme);
-    localStorage.setItem("theme", theme);
-
-    if (themeToggle) {
-        themeToggle.checked = theme === "dark";
-    }
-
-    if (logo) {
-        logo.src = logos[theme];
-    }
-}
-
-// Default to light on first load
-const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
-
-applyTheme(savedTheme);
-
-if (themeToggle) {
-    themeToggle.addEventListener("change", () => {
-        const newTheme: Theme = themeToggle.checked ? "dark" : "light";
-        applyTheme(newTheme);
-    });
-}
-
-// Add event listener for filter
-filterDD?.addEventListener("change", handleChange);
-
-// Add event listener for searcgh field
-searchForm?.addEventListener("submit", handleSubmit);
-
-function showVisitedCountries(): void {
-    const user = getLoggedInRegisteredUser();
-    const container = getCountryFlagsContainer();
-
-    if (!container) return;
-
-    // Not logged in
-    if (!user) {
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-warning text-center">
-                    Log in to view your visited countries.
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    const visitedNames = user.visitedCountries;
-
-    // No visited countries yet
-    if (visitedNames.length === 0) {
-        container.innerHTML = `
-            <div class="col-12">
-                <div class="alert alert-info text-center">
-                    You haven't marked any countries as visited yet.
-                </div>
-            </div>
-        `;
-        return;
-    }
-
-    const containerChildren = Array.from(container.children) as HTMLDivElement[];
-
-    containerChildren.forEach(card => {
-        const countryName = card.querySelector("h6")?.textContent;
-
-        if (countryName && visitedNames.includes(countryName)) {
-            (card as HTMLElement).style.display = "block";
-        } else {
-            (card as HTMLElement).style.display = "none";
-        }
-    });
-}
-// Function to handle selected filter option
-async function handleChange(event: Event) {
-    const selectedRegion = filterDD.value;
-
-    if (selectedRegion === "visited") {
-        showVisitedCountries();
-        return;
-    }
-
-    if (!selectedRegion) {
-        await getCountryInfo();
-        return;
-    }
-
-    const pullData = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
-    const result: Country[] = await pullData.json();
-
-    renderCountryCards(result, (country: Country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `info.html?country=${countryName}`;
-        };
-    });
-}
-
-
-// Function to handle submit 
-async function handleSubmit(event: Event) {
-    event.preventDefault(); // prevent default page refresh
-
-    const searchValue = searchInput.value.trim();
-
-    if (!searchValue) {
-        console.log("No input provided");
-        return;
-    }
-
-    console.log("Searching for:", searchValue);
-
-    // Call your function
-    await getSearchCountry(searchValue);
-
-}
-
-async function getCountryInfo() {
-    const response = await fetch(
-        "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags"
-    );
-
-    const result: Country[] = await response.json();
-
-    renderCountryCards(result, (country: Country) => {
-        return () => {
-            // Add event listener for click to get more info on country
-            const countryName = encodeURIComponent(country.name.common);
-            window.open(`info.html?country=${countryName}`, "_blank");
-            console.log(countryName);
-        };
-    });
-    renderTravelCounter(result.length);
-}
-
-export async function getSearchCountry(name: string) {
-    try {
-        const dataPull = await fetch(
-            `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
-        );
-        if (!dataPull.ok) {
-            throw new Error("Country not found")
-        }
-
-        const result: Country[] = await dataPull.json();
-        const searchedCountry: Country | undefined = result[0];
-
-        const homePage = document.getElementById("onLoadLayout");
-        const newPage = document.getElementById("newLayout");
-
-        if (!homePage || !newPage) return;
-
-        // Hide main page visibility and enable newLayout visibility
-        homePage.classList.add("d-none");
-        newPage.classList.remove("d-none");
-
-
-        if (!searchedCountry) {
-            console.error("Country not found");
-            return;
-        }
-        // Otherwise, good to go with output
-        await renderSearchCountryLayout(searchedCountry, homePage, newPage);
-    } catch (error) {
-        console.log("Search: error:", error);
-        showErrorMessage("Country not found.  Please ensure you are typing the name of an actual country")
-    }
-}
-
-function showErrorMessage(message: string) {
-    const container = document.getElementById("countryFlags");
-
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="col-12">
-            <div class="alert alert-danger text-center">
-                ${message}
-            </div>
-        </div>
-    `;
-}
-
-function renderTravelCounter(totalCountries: number): void {
-    const counter = document.getElementById("travelCounter");
-    const user = getLoggedInRegisteredUser();
-
-    if (!counter) return;
-
-    if (!user) {
-        counter.innerHTML = `
-            <div class="text-center">
-                <div class="fw-bold">Because all who wander... 🌍</div>
-                <div>Log in or register to track the countries you've explored.</div>
-            </div>
-        `;
-        return;
-    }
-
-    const username = user.name;
-    const visited = user.visitedCountries.length;
-    const percent = totalCountries > 0
-        ? ((visited / totalCountries) * 100).toFixed(1)
-        : "0";
-
-    counter.innerHTML = `
-        <div class="text-center">
-            <div>Welcome <strong>${username}</strong>! </div>
-            <div>You’ve explored <strong>${visited}</strong> countries</div>
-            <div><strong>${percent}%</strong> of the globe 🌍</div>
-            <div class="mt-1">Where will your next adventure be?✈️</div>
-        </div>
-    `;
-}
-
+// Registered user stored in localStorage
 type RegisteredUser = {
     name: string;
     email: string;
@@ -752,36 +79,33 @@ type RegisteredUser = {
     countryPhotos?: Record<string, string[]>;
 };
 
+// Active logged-in session
 type ActiveSession = {
     name: string;
     email: string;
 };
+// ================================================================
+//                       HELPER FUNCTIONS
+// ================================================================
 
-function getRegisteredUsers(): RegisteredUser[] {
-    const raw = localStorage.getItem("wanderlustUsers");
-    return raw ? JSON.parse(raw) as RegisteredUser[] : [];
+// Get the main container where country cards are rendered
+function getCountryFlagsContainer(): HTMLElement | null {
+    return document.getElementById("countryFlags");
 }
 
-function saveRegisteredUsers(users: RegisteredUser[]): void {
-    localStorage.setItem("wanderlustUsers", JSON.stringify(users));
+// Clear all existing content from a container
+function clearContainer(container: HTMLElement): void {
+    container.innerHTML = "";
 }
 
-function getCurrentUser(): ActiveSession | null {
-    const raw = localStorage.getItem("wanderlustCurrentUser");
-    return raw ? JSON.parse(raw) as ActiveSession : null;
-}
-
-function saveCurrentUser(user: ActiveSession): void {
-    localStorage.setItem("wanderlustCurrentUser", JSON.stringify(user));
-}
-
-function clearCurrentUser(): void {
-    localStorage.removeItem("wanderlustCurrentUser");
-    sessionStorage.removeItem("wanderlustCurrentUser");
-}
-
-function setMessage(elementId: string, message: string, isError: boolean = true): void {
+// Display a success or error message inside a target element
+function setMessage(
+    elementId: string,
+    message: string,
+    isError: boolean = true
+): void {
     const el = document.getElementById(elementId);
+
     if (!el) return;
 
     el.textContent = message;
@@ -789,12 +113,66 @@ function setMessage(elementId: string, message: string, isError: boolean = true)
     el.classList.add(isError ? "text-danger" : "text-success");
 }
 
+// Clear any text message inside a target element
 function clearMessage(elementId: string): void {
     const el = document.getElementById(elementId);
+
     if (!el) return;
+
     el.textContent = "";
 }
 
+// ==========================================================
+//              AUTHENTICATION AND USER DATA
+// ==========================================================
+
+// Get all registered users from localStorage
+function getRegisteredUsers(): RegisteredUser[] {
+    const raw = localStorage.getItem("wanderlustUsers");
+    return raw ? JSON.parse(raw) as RegisteredUser[] : [];
+}
+
+
+// Save all registered users to localStorage
+function saveRegisteredUsers(users: RegisteredUser[]): void {
+    localStorage.setItem("wanderlustUsers", JSON.stringify(users));
+}
+
+
+// Get the current logged-in user session
+function getCurrentUser(): ActiveSession | null {
+    const raw = localStorage.getItem("wanderlustCurrentUser");
+    return raw ? JSON.parse(raw) as ActiveSession : null;
+}
+
+
+// Save the current logged-in user session
+function saveCurrentUser(user: ActiveSession): void {
+    localStorage.setItem("wanderlustCurrentUser", JSON.stringify(user));
+}
+
+
+// Clear the current logged-in user session
+function clearCurrentUser(): void {
+    localStorage.removeItem("wanderlustCurrentUser");
+    sessionStorage.removeItem("wanderlustCurrentUser");
+}
+
+
+// Get the full registered user object for the currently logged-in user
+function getLoggedInRegisteredUser(): RegisteredUser | null {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return null;
+
+    const users = getRegisteredUsers();
+
+    return users.find(
+        user => user.email.toLowerCase() === currentUser.email.toLowerCase()
+    ) ?? null;
+}
+
+
+// Update authentication-related UI elements
 function updateAuthUI(): void {
     const authLink = document.getElementById("authLink") as HTMLAnchorElement | null;
     const welcomeUser = document.getElementById("welcomeUser") as HTMLElement | null;
@@ -805,7 +183,7 @@ function updateAuthUI(): void {
     if (currentUser) {
         if (authLink) authLink.classList.add("d-none");
         if (logoutLink) logoutLink.classList.remove("d-none");
-        // if (welcomeUser) welcomeUser.textContent = `Hi, ${currentUser.name}`;
+        if (welcomeUser) welcomeUser.textContent = "";
     } else {
         if (authLink) authLink.classList.remove("d-none");
         if (logoutLink) logoutLink.classList.add("d-none");
@@ -813,6 +191,22 @@ function updateAuthUI(): void {
     }
 }
 
+
+// Update the search input placeholder based on login state
+function updateSearchPlaceholder(): void {
+    const user = getCurrentUser();
+
+    if (!searchInput) return;
+
+    if (user) {
+        searchInput.placeholder = "Pack your bags! Where to next... ";
+    } else {
+        searchInput.placeholder = "Search a country...";
+    }
+}
+
+
+// Close the Bootstrap authentication modal
 function closeAuthModal(): void {
     const modalEl = document.getElementById("authModal");
     if (!modalEl) return;
@@ -821,6 +215,8 @@ function closeAuthModal(): void {
     modal?.hide();
 }
 
+
+// Initialize login, registration, and logout behavior
 function initAuth(): void {
     const loginForm = document.getElementById("loginForm") as HTMLFormElement | null;
     const registerForm = document.getElementById("registerForm") as HTMLFormElement | null;
@@ -841,7 +237,9 @@ function initAuth(): void {
             }
 
             const users = getRegisteredUsers();
-            const exists = users.some(user => user.email.toLowerCase() === email.toLowerCase());
+            const exists = users.some(
+                user => user.email.toLowerCase() === email.toLowerCase()
+            );
 
             if (exists) {
                 setMessage("registerMessage", "An account with this email already exists.");
@@ -868,7 +266,6 @@ function initAuth(): void {
             setTimeout(() => closeAuthModal(), 500);
         });
     }
-
 
     if (loginForm) {
         loginForm.addEventListener("submit", (event) => {
@@ -898,6 +295,7 @@ function initAuth(): void {
             }
 
             saveCurrentUser({ name: user.name, email: user.email });
+
             setMessage("loginMessage", "Login successful.", false);
             updateAuthUI();
             updateSearchPlaceholder();
@@ -912,6 +310,7 @@ function initAuth(): void {
     if (logoutLink) {
         logoutLink.addEventListener("click", (event) => {
             event.preventDefault();
+
             clearCurrentUser();
             updateAuthUI();
             updateSearchPlaceholder();
@@ -922,30 +321,13 @@ function initAuth(): void {
 
     updateAuthUI();
     updateSearchPlaceholder();
-
 }
 
-function updateSearchPlaceholder(): void {
-    const user = getCurrentUser(); // or getLoggedInRegisteredUser()
-    console.log("I am in placeholer function", user)
-    if (!searchInput) return;
+// ====================================================================
+//              VISITED COUNTRIES & PROGRESS TRACKING
+// =====================================================================
 
-    if (user) {
-        searchInput.placeholder = `Pack your bags! Where to next... `;
-    } else {
-        searchInput.placeholder = "Search a country...";
-    }
-}
-function getLoggedInRegisteredUser(): RegisteredUser | null {
-    const currentUser = getCurrentUser();
-    if (!currentUser) return null;
-
-    const users = getRegisteredUsers();
-    return users.find(
-        user => user.email.toLowerCase() === currentUser.email.toLowerCase()
-    ) ?? null;
-}
-
+// Check if a country has been marked as visited
 function isCountryVisited(countryName: string): boolean {
     const user = getLoggedInRegisteredUser();
     if (!user) return false;
@@ -953,8 +335,11 @@ function isCountryVisited(countryName: string): boolean {
     return user.visitedCountries.includes(countryName);
 }
 
+
+// Add or remove a country from visited list
 function toggleVisitedCountry(countryName: string): void {
     const currentUser = getCurrentUser();
+
     if (!currentUser) {
         alert("Please log in or register to track countries you've visited.");
         return;
@@ -980,6 +365,8 @@ function toggleVisitedCountry(countryName: string): void {
     saveRegisteredUsers(users);
 }
 
+
+// Update the visual state of the visited button
 function updateVisitedButtonState(
     button: HTMLButtonElement,
     countryName: string
@@ -992,6 +379,7 @@ function updateVisitedButtonState(
 
     button.classList.toggle("visited", visited);
     button.title = visited ? "Visited" : "Mark as visited";
+
     button.setAttribute(
         "aria-label",
         visited
@@ -1000,16 +388,10 @@ function updateVisitedButtonState(
     );
 }
 
-function updateTravelCounterFromStoredCountries(): void {
-    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
-
-    if (totalCountries > 0) {
-        renderTravelCounter(totalCountries);
-    }
-}
-
+// Create the visited toggle button for each country card
 function createVisitedToggle(country: Country): HTMLButtonElement {
     const button = document.createElement("button");
+
     button.type = "button";
     button.classList.add("visited-toggle", "btn", "btn-sm");
     button.setAttribute("aria-label", `Mark ${country.name.common} as visited`);
@@ -1029,8 +411,99 @@ function createVisitedToggle(country: Country): HTMLButtonElement {
     return button;
 }
 
+// Render the travel progress counter
+function renderTravelCounter(totalCountries: number): void {
+    const counter = document.getElementById("travelCounter");
+    const user = getLoggedInRegisteredUser();
+
+    if (!counter) return;
+
+    if (!user) {
+        counter.innerHTML = `
+            <div class="text-center">
+                <div class="fw-bold">Because all who wander... 🌍</div>
+                <div>Log in or register to track the countries you've explored.</div>
+            </div>
+        `;
+        return;
+    }
+
+    const username = user.name;
+    const visited = user.visitedCountries.length;
+
+    const percent = totalCountries > 0
+        ? ((visited / totalCountries) * 100).toFixed(1)
+        : "0";
+
+    counter.innerHTML = `
+        <div class="text-center">
+            <div>Welcome <strong>${username}</strong>!</div>
+            <div>You’ve explored <strong>${visited}</strong> countries</div>
+            <div><strong>${percent}%</strong> of the globe 🌍</div>
+            <div class="mt-1">Where will your next adventure be? ✈️</div>
+        </div>
+    `;
+}
+
+
+// Recalculate counter based on currently rendered countries
+function updateTravelCounterFromStoredCountries(): void {
+    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
+
+    if (totalCountries > 0) {
+        renderTravelCounter(totalCountries);
+    }
+}
+
+// Show only visited countries in the grid
+function showVisitedCountries(): void {
+    const user = getLoggedInRegisteredUser();
+    const container = getCountryFlagsContainer();
+
+    if (!container) return;
+
+    if (!user) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    Log in to view your visited countries.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const visitedNames = user.visitedCountries;
+
+    if (visitedNames.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    You haven't marked any countries as visited yet.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    const containerChildren = Array.from(container.children) as HTMLDivElement[];
+
+    containerChildren.forEach(card => {
+        const countryName = card.querySelector("h6")?.textContent;
+
+        if (countryName && visitedNames.includes(countryName)) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+
+
+// Render the "Visited" filter button dynamically
 function renderVisitedFilter(): void {
     const container = document.getElementById("visitedFilterContainer");
+
     if (!container) return;
 
     const user = getLoggedInRegisteredUser();
@@ -1063,7 +536,713 @@ function renderVisitedFilter(): void {
     container.appendChild(button);
 }
 
+// ====================================================================
+//                       PHOTO UPLOADS + PREVIEWS
+// ====================================================================
 
+// Create the photo upload button for visited countries
+function createPhotoUploadButton(country: Country): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("photo-upload-toggle", "btn", "btn-sm");
+    button.innerHTML = `<i class="bi bi-camera-fill"></i>`;
+    button.title = `Add photos for ${country.name.common}`;
+    button.setAttribute("aria-label", `Add photos for ${country.name.common}`);
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openPhotoPicker(country.name.common);
+    });
+
+    return button;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("File read failed"));
+
+        reader.readAsDataURL(file);
+    });
+}
+
+function openPhotoPicker(countryName: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+        alert("Please log in to add travel photos.");
+        return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
+
+    input.addEventListener("change", async () => {
+        const files = input.files;
+        if (!files || files.length === 0) return;
+
+        for (const file of Array.from(files)) {
+            const imageDataUrl = await fileToDataUrl(file);
+            saveCountryPhoto(countryName, imageDataUrl);
+        }
+
+        alert(`Photo saved for ${countryName}`);
+        getCountryInfo();
+    });
+
+    input.click();
+}
+
+function saveCountryPhoto(countryName: string, imageDataUrl: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    const users = getRegisteredUsers();
+    const user = users.find(
+        u => u.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+
+    if (!user) return;
+
+    if (!user.countryPhotos) {
+        user.countryPhotos = {};
+    }
+
+    if (!user.countryPhotos[countryName]) {
+        user.countryPhotos[countryName] = [];
+    }
+
+    user.countryPhotos[countryName].push(imageDataUrl);
+
+    saveRegisteredUsers(users);
+}
+
+function createCountryPhotoPreview(countryName: string): HTMLDivElement | null {
+    const user = getLoggedInRegisteredUser();
+
+    if (!user || !user.countryPhotos) {
+        return null;
+    }
+
+    const photos = user.countryPhotos[countryName];
+
+    if (!photos || photos.length === 0) {
+        return null;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("country-photo-preview");
+
+    const img = document.createElement("img");
+    img.src = photos[0] ?? "";
+    img.alt = `${countryName} travel photo`;
+    img.classList.add("country-photo-preview-img");
+
+    wrapper.appendChild(img);
+    return wrapper;
+}
+
+//======================================================
+//               MAIN COUNTRIES CARD BUILDER
+// =====================================================
+
+// Create the country flag image wrapper
+function createCountryImage(country: Country): HTMLDivElement {
+    const imgWrapper = document.createElement("div");
+    imgWrapper.classList.add("flag-wrapper");
+
+    const img = document.createElement("img");
+    img.src = country.flags.svg;
+    img.alt = country.name.common;
+    img.classList.add("flag-img");
+
+    imgWrapper.appendChild(img);
+    return imgWrapper;
+}
+
+// Create the country name heading
+function createCountryName(country: Country): HTMLHeadingElement {
+    const name = document.createElement("h6");
+    name.textContent = country.name.common;
+    name.classList.add("mt-2", "fw-bold");
+    return name;
+}
+
+// Create the capital text
+function createCountryCapital(country: Country): HTMLParagraphElement {
+    const capital = document.createElement("p");
+    capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
+    return capital;
+}
+
+// Create the region text
+function createCountryRegion(country: Country): HTMLParagraphElement {
+    const region = document.createElement("p");
+    region.textContent = `Region: ${country.region}`;
+    return region;
+}
+
+// Create the population text
+function createCountryPopulation(country: Country): HTMLParagraphElement {
+    const population = document.createElement("p");
+    population.textContent = `Population: ${country.population.toLocaleString()}`;
+    return population;
+}
+
+// Build a full reusable country card
+function createCountryCard(
+    country: Country,
+    clickHandler: () => void
+): HTMLDivElement {
+    const col = document.createElement("div");
+    col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
+
+    col.addEventListener("click", clickHandler);
+
+    const currentUser = getCurrentUser();
+
+    // Visited toggle for logged-in users
+    if (currentUser) {
+        const visitedToggle = createVisitedToggle(country);
+        col.appendChild(visitedToggle);
+    }
+
+    // Photo upload button only for visited countries
+    if (currentUser && isCountryVisited(country.name.common)) {
+        const photoButton = createPhotoUploadButton(country);
+        col.appendChild(photoButton);
+    }
+
+    // Main card content
+    const img = createCountryImage(country);
+    const name = createCountryName(country);
+    const capital = createCountryCapital(country);
+    const region = createCountryRegion(country);
+    const population = createCountryPopulation(country);
+
+    col.appendChild(img);
+    col.appendChild(name);
+    col.appendChild(capital);
+    col.appendChild(region);
+    col.appendChild(population);
+
+    // Photo thumbnail preview if available
+    const thumbnail = createCountryPhotoPreview(country.name.common);
+    if (thumbnail) {
+        col.appendChild(thumbnail);
+    }
+
+    return col;
+}
+
+// Render a list of countries to the page
+function renderCountryCards(
+    countryList: Country[],
+    clickHandlerBuilder: (country: Country) => () => void
+): void {
+    const container = getCountryFlagsContainer();
+
+    if (!container) return;
+
+    clearContainer(container);
+
+    for (const country of countryList) {
+        const col = createCountryCard(country, clickHandlerBuilder(country));
+        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
+        container.appendChild(col);
+    }
+}
+
+// ===================================================================================
+//                          SEARCH / DETAIL PAGE BUILDERS
+// ====================================================================================
+
+// Create back button for returning to main layout
+function createBackButton(homePage: HTMLElement, newPage: HTMLElement): HTMLDivElement {
+    const backButton = document.createElement("div");
+    backButton.textContent = "← Back";
+    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
+
+    backButton.addEventListener("click", async () => {
+        newPage.classList.add("d-none");
+        homePage.classList.remove("d-none");
+    });
+
+    return backButton;
+}
+
+
+// Create left column with the country flag
+function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
+    const leftCol = document.createElement("div");
+    leftCol.classList.add(
+        "col-12",
+        "col-lg-6",
+        "d-flex",
+        "justify-content-center",
+        "align-items-center"
+    );
+
+    const img = document.createElement("img");
+    img.src = searchedCountry.flags.svg;
+    img.alt = searchedCountry.name.common;
+    img.classList.add("flag-img", "border", "rounded");
+    img.style.objectFit = "cover";
+
+    leftCol.appendChild(img);
+
+    return leftCol;
+}
+
+
+// Create top-left detail column
+function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
+    const topLeft = document.createElement("div");
+    topLeft.classList.add("col-12", "col-lg-6", "p-3");
+
+    const countryName = document.createElement("h4");
+    countryName.textContent = searchedCountry.name.common;
+
+    const nativeName = document.createElement("p");
+    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
+
+    const population = document.createElement("p");
+    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
+
+    const region = document.createElement("p");
+    region.textContent = `Region: ${searchedCountry.region}`;
+
+    const subRegion = document.createElement("p");
+    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
+
+    const capital = document.createElement("p");
+    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
+
+    topLeft.appendChild(countryName);
+    topLeft.appendChild(nativeName);
+    topLeft.appendChild(population);
+    topLeft.appendChild(region);
+    topLeft.appendChild(subRegion);
+    topLeft.appendChild(capital);
+
+    return topLeft;
+}
+
+
+// Create top-right detail column
+function createTopRightDetails(searchedCountry: Country): HTMLDivElement {
+    const topRight = document.createElement("div");
+    topRight.classList.add("col-6", "p-3");
+
+    const tld = document.createElement("p");
+    tld.textContent = `Top Level Domain: ${searchedCountry.tld?.join(", ") ?? "N/A"}`;
+
+    const currencies = document.createElement("p");
+    const currencyList = searchedCountry.currencies
+        ? Object.values(searchedCountry.currencies)
+              .map((currency) => currency.name)
+              .join(", ")
+        : "N/A";
+    currencies.textContent = `Currencies: ${currencyList}`;
+
+    const languages = document.createElement("p");
+    const languageList = searchedCountry.languages
+        ? Object.values(searchedCountry.languages).join(", ")
+        : "N/A";
+    languages.textContent = `Languages: ${languageList}`;
+
+    topRight.appendChild(tld);
+    topRight.appendChild(currencies);
+    topRight.appendChild(languages);
+
+    return topRight;
+}
+
+
+// Create the top section of the detail layout
+function createSearchTopSection(searchedCountry: Country): HTMLDivElement {
+    const topSection = document.createElement("div");
+    topSection.classList.add("p-3");
+    topSection.style.flex = "2";
+
+    const topRow = document.createElement("div");
+    topRow.classList.add("row", "g-3", "h-100");
+
+    const topLeft = createTopLeftDetails(searchedCountry);
+    const topRight = createTopRightDetails(searchedCountry);
+
+    topRow.appendChild(topLeft);
+    topRow.appendChild(topRight);
+    topSection.appendChild(topRow);
+
+    return topSection;
+}
+
+
+// Create bottom section shell for border countries
+function createBottomSectionShell(): {
+    bottomSection: HTMLDivElement;
+    borderWrap: HTMLDivElement;
+} {
+    const bottomSection = document.createElement("div");
+    bottomSection.classList.add("p-3");
+    bottomSection.style.flex = "1";
+
+    const borderTitle = document.createElement("p");
+    borderTitle.classList.add("fw-bold", "mb-2");
+    borderTitle.textContent = "Border Countries:";
+
+    const borderWrap = document.createElement("div");
+    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2");
+
+    bottomSection.appendChild(borderTitle);
+    bottomSection.appendChild(borderWrap);
+
+    return { bottomSection, borderWrap };
+}
+
+
+// Create a border-country button
+function createBorderCountryButton(country: { name: { common: string } }): HTMLButtonElement {
+    const borderItem = document.createElement("button");
+    borderItem.type = "button";
+    borderItem.textContent = country.name.common;
+    borderItem.classList.add("btn", "btn-outline-primary", "btn-sm");
+
+    borderItem.addEventListener("mouseenter", async () => {
+        await showBorderCountryHover(country.name.common, borderItem);
+    });
+
+    borderItem.addEventListener("mouseleave", () => {
+        removeHoverCard();
+    });
+
+    borderItem.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        const countryName = encodeURIComponent(country.name.common);
+        window.open(`info.html?country=${countryName}`, "_blank");
+    });
+
+    return borderItem;
+}
+
+// Fetch and render border countries
+async function renderBorderCountries(
+    searchedCountry: Country,
+    borderWrap: HTMLDivElement
+): Promise<void> {
+    if (searchedCountry.borders && searchedCountry.borders.length > 0) {
+        const codes = searchedCountry.borders.join(",");
+
+        const borderResponse = await fetch(
+            `https://restcountries.com/v3.1/alpha?codes=${codes}&fields=name`
+        );
+
+        const borderData: { name: { common: string } }[] = await borderResponse.json();
+
+        borderData.forEach((country) => {
+            const borderItem = createBorderCountryButton(country);
+            borderWrap.appendChild(borderItem);
+        });
+    } else {
+        const noBorders = document.createElement("span");
+        noBorders.textContent = "None";
+        borderWrap.appendChild(noBorders);
+    }
+}
+
+
+// Create bottom section of detail layout
+async function createSearchBottomSection(searchedCountry: Country): Promise<HTMLDivElement> {
+    const { bottomSection, borderWrap } = createBottomSectionShell();
+    await renderBorderCountries(searchedCountry, borderWrap);
+    return bottomSection;
+}
+
+
+// Create right-hand detail column
+async function createSearchRightColumn(searchedCountry: Country): Promise<HTMLDivElement> {
+    const rightCol = document.createElement("div");
+    rightCol.classList.add("col-12", "col-md-6");
+
+    const rightColInner = document.createElement("div");
+    rightColInner.classList.add("d-flex", "flex-column", "h-100", "gap-3");
+
+    const topSection = createSearchTopSection(searchedCountry);
+    const bottomSection = await createSearchBottomSection(searchedCountry);
+
+    rightColInner.appendChild(topSection);
+    rightColInner.appendChild(bottomSection);
+    rightCol.appendChild(rightColInner);
+
+    return rightCol;
+}
+
+// Render the full search/detail layout
+export async function renderSearchCountryLayout(
+    searchedCountry: Country,
+    homePage: HTMLElement,
+    newPage: HTMLElement
+): Promise<void> {
+    newPage.innerHTML = "";
+
+    const container = document.createElement("div");
+    container.classList.add("container", "py-3");
+
+    if (document.getElementById("countryFlags")) {
+        const backButton = createBackButton(homePage, newPage);
+        container.appendChild(backButton);
+    }
+
+    const outerRow = document.createElement("div");
+    outerRow.classList.add("row", "g-3", "align-items-stretch");
+
+    const leftCol = createSearchLeftColumn(searchedCountry);
+    const rightCol = await createSearchRightColumn(searchedCountry);
+
+    outerRow.appendChild(leftCol);
+    outerRow.appendChild(rightCol);
+
+    container.appendChild(outerRow);
+    newPage.appendChild(container);
+}
+
+// ==================================================================
+//                       HOVER CARD BEHAVIOR
+// ==================================================================
+
+// Track the currently active hover card
+let activeHoverCard: HTMLDivElement | null = null;
+
+// Remove any existing hover card from the DOM
+function removeHoverCard(): void {
+    if (activeHoverCard) {
+        activeHoverCard.remove();
+        activeHoverCard = null;
+    }
+}
+
+// Show hover card with country preview info
+async function showBorderCountryHover(
+    countryName: string,
+    anchor: HTMLElement
+): Promise<void> {
+    removeHoverCard();
+
+    try {
+        const response = await fetch(
+            `https://restcountries.com/v3.1/name/${encodeURIComponent(countryName)}?fields=name,capital,region,population,flags`
+        );
+
+        const result: Country[] = await response.json();
+        const country = result[0];
+
+        if (!country) return;
+
+        const hoverCard = document.createElement("div");
+        hoverCard.classList.add("country-hover-card");
+
+        hoverCard.innerHTML = `
+            <div class="fw-bold mb-2">${country.name.common}</div>
+            <img src="${country.flags.svg}" alt="${country.name.common}" class="mb-2 border rounded">
+            <p class="mb-1"><strong>Capital:</strong> ${country.capital?.[0] ?? "N/A"}</p>
+            <p class="mb-1"><strong>Region:</strong> ${country.region}</p>
+            <p class="mb-0"><strong>Population:</strong> ${country.population.toLocaleString()}</p>
+        `;
+
+        // Position relative to parent container
+        const parent = anchor.parentElement;
+        if (!parent) return;
+
+        parent.appendChild(hoverCard);
+
+        hoverCard.style.position = "absolute";
+        hoverCard.style.top = "calc(100% + 8px)";
+        hoverCard.style.left = "0";
+
+        activeHoverCard = hoverCard;
+
+    } catch (error) {
+        console.error("Hover card error:", error);
+    }
+}
+
+
+// ===================================================================
+//                              THEME LOGIC
+// ===================================================================
+
+// Theme options
+type Theme = "dark" | "light";
+
+// Logo paths for each theme
+const logos: Record<Theme, string> = {
+    dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",
+    light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
+};
+
+// Apply selected theme and matching logo
+function applyTheme(theme: Theme): void {
+    root.setAttribute("data-bs-theme", theme);
+    localStorage.setItem("theme", theme);
+
+    if (themeToggle) {
+        themeToggle.checked = theme === "dark";
+    }
+
+    if (logo) {
+        logo.src = logos[theme];
+    }
+}
+
+// =============================================================
+//               DATA FETCHING AND EVENT HANDLERS
+// ==============================================================
+
+// Handle dropdown filter changes
+async function handleChange(event: Event): Promise<void> {
+    const selectedRegion = filterDD?.value;
+
+    if (!selectedRegion) {
+        await getCountryInfo();
+        return;
+    }
+
+    if (selectedRegion === "visited") {
+        showVisitedCountries();
+        return;
+    }
+
+    const response = await fetch(
+        `https://restcountries.com/v3.1/region/${selectedRegion}`
+    );
+
+    const result: Country[] = await response.json();
+
+    renderCountryCards(result, (country: Country) => {
+        return () => {
+            const countryName = encodeURIComponent(country.name.common);
+            window.location.href = `info.html?country=${countryName}`;
+        };
+    });
+}
+
+
+// Handle search form submission
+async function handleSubmit(event: Event): Promise<void> {
+    event.preventDefault();
+
+    const searchValue = searchInput?.value.trim();
+
+    if (!searchValue) {
+        console.log("No input provided");
+        return;
+    }
+
+    console.log("Searching for:", searchValue);
+
+    await getSearchCountry(searchValue);
+}
+
+
+// Fetch and render all countries on the main page
+async function getCountryInfo(): Promise<void> {
+    const response = await fetch(
+        "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags"
+    );
+
+    const result: Country[] = await response.json();
+
+    renderCountryCards(result, (country: Country) => {
+        return () => {
+            const countryName = encodeURIComponent(country.name.common);
+            window.open(`info.html?country=${countryName}`, "_blank");
+            console.log(countryName);
+        };
+    });
+
+    renderTravelCounter(result.length);
+}
+
+
+// Fetch a single searched country and render the detail layout
+export async function getSearchCountry(name: string): Promise<void> {
+    try {
+        const response = await fetch(
+            `https://restcountries.com/v3.1/name/${name}?fields=name,nativeName,capital,region,subregion,population,flags,tld,currencies,languages,borders`
+        );
+
+        if (!response.ok) {
+            throw new Error("Country not found");
+        }
+
+        const result: Country[] = await response.json();
+        const searchedCountry: Country | undefined = result[0];
+
+        const homePage = document.getElementById("onLoadLayout");
+        const newPage = document.getElementById("newLayout");
+
+        if (!homePage || !newPage || !searchedCountry) return;
+
+        homePage.classList.add("d-none");
+        newPage.classList.remove("d-none");
+
+        await renderSearchCountryLayout(searchedCountry, homePage, newPage);
+    } catch (error) {
+        console.log("Search error:", error);
+        showErrorMessage(
+            "Country not found. Please ensure you are typing the name of an actual country."
+        );
+    }
+}
+
+
+// Render an error message inside the country container
+function showErrorMessage(message: string): void {
+    const container = document.getElementById("countryFlags");
+
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="col-12">
+            <div class="alert alert-danger text-center">
+                ${message}
+            </div>
+        </div>
+    `;
+}
+
+// ===================================================================
+//           APP STARTUP / INITIALIZATION
+// ====================================================================
+
+// Load saved theme or default to light
+const savedTheme = (localStorage.getItem("theme") as Theme) || "light";
+applyTheme(savedTheme);
+
+
+// Theme toggle listener
+if (themeToggle) {
+    themeToggle.addEventListener("change", () => {
+        const newTheme: Theme = themeToggle.checked ? "dark" : "light";
+        applyTheme(newTheme);
+    });
+}
+
+
+// Filter dropdown listener
+filterDD?.addEventListener("change", handleChange);
+
+
+// Search form listener
+searchForm?.addEventListener("submit", handleSubmit);
+
+
+// Initialize app state
 initAuth();
 updateSearchPlaceholder();
 getCountryInfo();
