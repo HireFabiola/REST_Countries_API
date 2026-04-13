@@ -77,6 +77,7 @@ type RegisteredUser = {
     password: string;
     visitedCountries: string[];
     countryPhotos?: Record<string, string[]>;
+    countryJournal?: Record<string, string>;
 };
 
 // Active logged-in session
@@ -113,6 +114,35 @@ function setMessage(
     el.classList.add(isError ? "text-danger" : "text-success");
 }
 
+// Load journal
+function getCountryJournal(countryName: string): string {
+    const user = getLoggedInRegisteredUser();
+
+    if (!user || !user.countryJournal) return "";
+
+    return user.countryJournal[countryName] ?? "";
+}
+
+// Save journal
+function saveCountryJournal(countryName: string, note: string): void {
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    const users = getRegisteredUsers();
+    const user = users.find(
+        u => u.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+
+    if (!user) return;
+
+    if (!user.countryJournal) {
+        user.countryJournal = {};
+    }
+
+    user.countryJournal[countryName] = note;
+    saveRegisteredUsers(users);
+}
+
 // Clear any text message inside a target element
 function clearMessage(elementId: string): void {
     const el = document.getElementById(elementId);
@@ -122,6 +152,15 @@ function clearMessage(elementId: string): void {
     el.textContent = "";
 }
 
+// Clear error message once corrected
+function clearCountryError(): void {
+    if (!countryContainer) return;
+
+    // Only clear if it's currently showing an error
+    if (countryContainer.querySelector(".alert")) {
+        countryContainer.innerHTML = "";
+    }
+}
 // ==========================================================
 //              AUTHENTICATION AND USER DATA
 // ==========================================================
@@ -411,7 +450,6 @@ function createVisitedToggle(country: Country): HTMLButtonElement {
     return button;
 }
 
-// Render the travel progress counter
 function renderTravelCounter(totalCountries: number): void {
     const counter = document.getElementById("travelCounter");
     const user = getLoggedInRegisteredUser();
@@ -444,7 +482,6 @@ function renderTravelCounter(totalCountries: number): void {
         </div>
     `;
 }
-
 
 // Recalculate counter based on currently rendered countries
 function updateTravelCounterFromStoredCountries(): void {
@@ -557,6 +594,23 @@ function createPhotoUploadButton(country: Country): HTMLButtonElement {
     return button;
 }
 
+// Also create the journal icon
+function createJournalButton(country: Country): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("journal-toggle", "btn", "btn-sm");
+    button.innerHTML = `<i class="bi bi-pencil-fill"></i>`;
+    button.title = `Journal about ${country.name.common}`;
+    button.setAttribute("aria-label", `Journal about ${country.name.common}`);
+
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openCountryMemoryModal(country.name.common);
+    });
+
+    return button;
+}
+
 function fileToDataUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -623,28 +677,112 @@ function saveCountryPhoto(countryName: string, imageDataUrl: string): void {
 function createCountryPhotoPreview(countryName: string): HTMLDivElement | null {
     const user = getLoggedInRegisteredUser();
 
-    if (!user || !user.countryPhotos) {
-        return null;
-    }
+    if (!user || !user.countryPhotos) return null;
 
     const photos = user.countryPhotos[countryName];
+    if (!photos || photos.length === 0) return null;
 
-    if (!photos || photos.length === 0) {
-        return null;
-    }
+    const firstPhoto = photos[0];
+    if (!firstPhoto) return null;
 
     const wrapper = document.createElement("div");
-    wrapper.classList.add("country-photo-preview");
+    wrapper.classList.add("country-photo-large");
 
     const img = document.createElement("img");
-    img.src = photos[0] ?? "";
+    img.src = firstPhoto;
     img.alt = `${countryName} travel photo`;
-    img.classList.add("country-photo-preview-img");
+    img.classList.add("country-photo-large-img");
 
     wrapper.appendChild(img);
     return wrapper;
 }
 
+function getCountryPhotos(countryName: string): string[] {
+    const user = getLoggedInRegisteredUser();
+
+    if (!user || !user.countryPhotos) return [];
+
+    return user.countryPhotos[countryName] ?? [];
+}
+
+function openCountryMemoryModal(countryName: string): void {
+    const existing = document.getElementById("memoryModal");
+    if (existing) {
+        existing.remove();
+    }
+
+    const photos = getCountryPhotos(countryName);
+    const journalText = getCountryJournal(countryName);
+
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.id = "memoryModal";
+    modal.tabIndex = -1;
+
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${countryName} Memories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="row g-2" id="memoryGallery">
+                            ${photos.length > 0
+            ? photos.map(photo => `
+                                    <div class="col-6 col-md-4">
+                                        <img src="${photo}" class="img-fluid rounded border memory-thumb" alt="${countryName} memory">
+                                    </div>
+                                `).join("")
+            : `<p class="text-muted">No photos uploaded yet.</p>`
+        }
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="countryJournalInput" class="form-label fw-bold">Travel Journal</label>
+                        <textarea
+                            id="countryJournalInput"
+                            class="form-control"
+                            rows="5"
+                            placeholder="Write about your experience in ${countryName}..."
+                        >${journalText}</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="memoryUploadButton">Add Photo</button>
+                    <button type="button" class="btn btn-primary" id="saveJournalButton">Save Journal</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const modalInstance = new (window as any).bootstrap.Modal(modal);
+    modalInstance.show();
+
+    const saveButton = document.getElementById("saveJournalButton");
+    const uploadButton = document.getElementById("memoryUploadButton");
+    const journalInput = document.getElementById("countryJournalInput") as HTMLTextAreaElement | null;
+
+    saveButton?.addEventListener("click", () => {
+        saveCountryJournal(countryName, journalInput?.value ?? "");
+        modalInstance.hide();
+    });
+
+    uploadButton?.addEventListener("click", () => {
+        openPhotoPicker(countryName);
+        modalInstance.hide();
+    });
+
+    modal.addEventListener("hidden.bs.modal", () => {
+        modal.remove();
+    });
+}
 //======================================================
 //               MAIN COUNTRIES CARD BUILDER
 // =====================================================
@@ -663,7 +801,6 @@ function createCountryImage(country: Country): HTMLDivElement {
     return imgWrapper;
 }
 
-// Create the country name heading
 function createCountryName(country: Country): HTMLHeadingElement {
     const name = document.createElement("h6");
     name.textContent = country.name.common;
@@ -671,28 +808,25 @@ function createCountryName(country: Country): HTMLHeadingElement {
     return name;
 }
 
-// Create the capital text
 function createCountryCapital(country: Country): HTMLParagraphElement {
     const capital = document.createElement("p");
     capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
     return capital;
 }
 
-// Create the region text
 function createCountryRegion(country: Country): HTMLParagraphElement {
     const region = document.createElement("p");
     region.textContent = `Region: ${country.region}`;
     return region;
 }
 
-// Create the population text
 function createCountryPopulation(country: Country): HTMLParagraphElement {
     const population = document.createElement("p");
     population.textContent = `Population: ${country.population.toLocaleString()}`;
     return population;
 }
 
-// Build a full reusable country card
+// Create the country name heading
 function createCountryCard(
     country: Country,
     clickHandler: () => void
@@ -700,45 +834,55 @@ function createCountryCard(
     const col = document.createElement("div");
     col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
 
-    col.addEventListener("click", clickHandler);
-
     const currentUser = getCurrentUser();
 
-    // Visited toggle for logged-in users
+    col.addEventListener("click", () => {
+        const isVisited = isCountryVisited(country.name.common);
+        const photos = getCountryPhotos(country.name.common);
+        const journal = getCountryJournal(country.name.common).trim();
+
+        if (isVisited && (photos.length > 0 || journal.length > 0)) {
+            openCountryMemoryModal(country.name.common);
+        } else {
+            clickHandler();
+        }
+    });
+
     if (currentUser) {
         const visitedToggle = createVisitedToggle(country);
         col.appendChild(visitedToggle);
     }
 
-    // Photo upload button only for visited countries
     if (currentUser && isCountryVisited(country.name.common)) {
         const photoButton = createPhotoUploadButton(country);
+        const journalButton = createJournalButton(country);
         col.appendChild(photoButton);
+        col.appendChild(journalButton);
     }
 
-    // Main card content
     const img = createCountryImage(country);
     const name = createCountryName(country);
+    const thumbnail = createCountryPhotoPreview(country.name.common);
+
+    col.appendChild(img);
+    col.appendChild(name);
+
+    if (thumbnail) {
+        col.appendChild(thumbnail);
+        return col;
+    }
+
     const capital = createCountryCapital(country);
     const region = createCountryRegion(country);
     const population = createCountryPopulation(country);
 
-    col.appendChild(img);
-    col.appendChild(name);
     col.appendChild(capital);
     col.appendChild(region);
     col.appendChild(population);
 
-    // Photo thumbnail preview if available
-    const thumbnail = createCountryPhotoPreview(country.name.common);
-    if (thumbnail) {
-        col.appendChild(thumbnail);
-    }
-
     return col;
 }
 
-// Render a list of countries to the page
 function renderCountryCards(
     countryList: Country[],
     clickHandlerBuilder: (country: Country) => () => void
@@ -755,7 +899,6 @@ function renderCountryCards(
         container.appendChild(col);
     }
 }
-
 // ===================================================================================
 //                          SEARCH / DETAIL PAGE BUILDERS
 // ====================================================================================
@@ -783,7 +926,8 @@ function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
         "col-lg-6",
         "d-flex",
         "justify-content-center",
-        "align-items-center"
+        "align-items-center",
+        "position-relative"
     );
 
     const img = document.createElement("img");
@@ -794,43 +938,22 @@ function createSearchLeftColumn(searchedCountry: Country): HTMLDivElement {
 
     leftCol.appendChild(img);
 
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const visitedToggle = createVisitedToggle(searchedCountry);
+        leftCol.appendChild(visitedToggle);
+
+        if (isCountryVisited(searchedCountry.name.common)) {
+            const photoButton = createPhotoUploadButton(searchedCountry);
+            leftCol.appendChild(photoButton);
+
+            const journalButton = createJournalButton(searchedCountry);
+            leftCol.appendChild(journalButton);
+        }
+    }
+
     return leftCol;
 }
-
-
-// Create top-left detail column
-function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
-    const topLeft = document.createElement("div");
-    topLeft.classList.add("col-12", "col-lg-6", "p-3");
-
-    const countryName = document.createElement("h4");
-    countryName.textContent = searchedCountry.name.common;
-
-    const nativeName = document.createElement("p");
-    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
-
-    const population = document.createElement("p");
-    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
-
-    const region = document.createElement("p");
-    region.textContent = `Region: ${searchedCountry.region}`;
-
-    const subRegion = document.createElement("p");
-    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
-
-    const capital = document.createElement("p");
-    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
-
-    topLeft.appendChild(countryName);
-    topLeft.appendChild(nativeName);
-    topLeft.appendChild(population);
-    topLeft.appendChild(region);
-    topLeft.appendChild(subRegion);
-    topLeft.appendChild(capital);
-
-    return topLeft;
-}
-
 
 // Create top-right detail column
 function createTopRightDetails(searchedCountry: Country): HTMLDivElement {
@@ -843,8 +966,8 @@ function createTopRightDetails(searchedCountry: Country): HTMLDivElement {
     const currencies = document.createElement("p");
     const currencyList = searchedCountry.currencies
         ? Object.values(searchedCountry.currencies)
-              .map((currency) => currency.name)
-              .join(", ")
+            .map((currency) => currency.name)
+            .join(", ")
         : "N/A";
     currencies.textContent = `Currencies: ${currencyList}`;
 
@@ -881,6 +1004,38 @@ function createSearchTopSection(searchedCountry: Country): HTMLDivElement {
     return topSection;
 }
 
+// Create top left sectiom of the detail layout
+function createTopLeftDetails(searchedCountry: Country): HTMLDivElement {
+    const topLeft = document.createElement("div");
+    topLeft.classList.add("col-12", "col-lg-6", "p-3");
+
+    const countryName = document.createElement("h4");
+    countryName.textContent = searchedCountry.name.common;
+
+    const nativeName = document.createElement("p");
+    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
+
+    const population = document.createElement("p");
+    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
+
+    const region = document.createElement("p");
+    region.textContent = `Region: ${searchedCountry.region}`;
+
+    const subRegion = document.createElement("p");
+    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
+
+    const capital = document.createElement("p");
+    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
+
+    topLeft.appendChild(countryName);
+    topLeft.appendChild(nativeName);
+    topLeft.appendChild(population);
+    topLeft.appendChild(region);
+    topLeft.appendChild(subRegion);
+    topLeft.appendChild(capital);
+
+    return topLeft;
+}
 
 // Create bottom section shell for border countries
 function createBottomSectionShell(): {
@@ -896,7 +1051,7 @@ function createBottomSectionShell(): {
     borderTitle.textContent = "Border Countries:";
 
     const borderWrap = document.createElement("div");
-    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2");
+    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2", "position-relative");
 
     bottomSection.appendChild(borderTitle);
     bottomSection.appendChild(borderWrap);
@@ -1136,6 +1291,8 @@ async function handleChange(event: Event): Promise<void> {
 async function handleSubmit(event: Event): Promise<void> {
     event.preventDefault();
 
+    clearCountryError();
+
     const searchValue = searchInput?.value.trim();
 
     if (!searchValue) {
@@ -1233,6 +1390,8 @@ if (themeToggle) {
     });
 }
 
+// Clear error message if input is corrected
+searchInput?.addEventListener("input", clearCountryError);
 
 // Filter dropdown listener
 filterDD?.addEventListener("change", handleChange);

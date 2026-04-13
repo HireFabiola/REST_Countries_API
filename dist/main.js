@@ -54,12 +54,43 @@ function setMessage(elementId, message, isError = true) {
     el.classList.remove("text-danger", "text-success");
     el.classList.add(isError ? "text-danger" : "text-success");
 }
+// Load journal
+function getCountryJournal(countryName) {
+    const user = getLoggedInRegisteredUser();
+    if (!user || !user.countryJournal)
+        return "";
+    return user.countryJournal[countryName] ?? "";
+}
+// Save journal
+function saveCountryJournal(countryName, note) {
+    const currentUser = getCurrentUser();
+    if (!currentUser)
+        return;
+    const users = getRegisteredUsers();
+    const user = users.find(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+    if (!user)
+        return;
+    if (!user.countryJournal) {
+        user.countryJournal = {};
+    }
+    user.countryJournal[countryName] = note;
+    saveRegisteredUsers(users);
+}
 // Clear any text message inside a target element
 function clearMessage(elementId) {
     const el = document.getElementById(elementId);
     if (!el)
         return;
     el.textContent = "";
+}
+// Clear error message once corrected
+function clearCountryError() {
+    if (!countryContainer)
+        return;
+    // Only clear if it's currently showing an error
+    if (countryContainer.querySelector(".alert")) {
+        countryContainer.innerHTML = "";
+    }
 }
 // ==========================================================
 //              AUTHENTICATION AND USER DATA
@@ -278,7 +309,6 @@ function createVisitedToggle(country) {
     });
     return button;
 }
-// Render the travel progress counter
 function renderTravelCounter(totalCountries) {
     const counter = document.getElementById("travelCounter");
     const user = getLoggedInRegisteredUser();
@@ -397,6 +427,20 @@ function createPhotoUploadButton(country) {
     });
     return button;
 }
+// Also create the journal icon
+function createJournalButton(country) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("journal-toggle", "btn", "btn-sm");
+    button.innerHTML = `<i class="bi bi-pencil-fill"></i>`;
+    button.title = `Journal about ${country.name.common}`;
+    button.setAttribute("aria-label", `Journal about ${country.name.common}`);
+    button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openCountryMemoryModal(country.name.common);
+    });
+    return button;
+}
 function fileToDataUrl(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -447,21 +491,96 @@ function saveCountryPhoto(countryName, imageDataUrl) {
 }
 function createCountryPhotoPreview(countryName) {
     const user = getLoggedInRegisteredUser();
-    if (!user || !user.countryPhotos) {
+    if (!user || !user.countryPhotos)
         return null;
-    }
     const photos = user.countryPhotos[countryName];
-    if (!photos || photos.length === 0) {
+    if (!photos || photos.length === 0)
         return null;
-    }
+    const firstPhoto = photos[0];
+    if (!firstPhoto)
+        return null;
     const wrapper = document.createElement("div");
-    wrapper.classList.add("country-photo-preview");
+    wrapper.classList.add("country-photo-large");
     const img = document.createElement("img");
-    img.src = photos[0] ?? "";
+    img.src = firstPhoto;
     img.alt = `${countryName} travel photo`;
-    img.classList.add("country-photo-preview-img");
+    img.classList.add("country-photo-large-img");
     wrapper.appendChild(img);
     return wrapper;
+}
+function getCountryPhotos(countryName) {
+    const user = getLoggedInRegisteredUser();
+    if (!user || !user.countryPhotos)
+        return [];
+    return user.countryPhotos[countryName] ?? [];
+}
+function openCountryMemoryModal(countryName) {
+    const existing = document.getElementById("memoryModal");
+    if (existing) {
+        existing.remove();
+    }
+    const photos = getCountryPhotos(countryName);
+    const journalText = getCountryJournal(countryName);
+    const modal = document.createElement("div");
+    modal.className = "modal fade";
+    modal.id = "memoryModal";
+    modal.tabIndex = -1;
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">${countryName} Memories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="row g-2" id="memoryGallery">
+                            ${photos.length > 0
+        ? photos.map(photo => `
+                                    <div class="col-6 col-md-4">
+                                        <img src="${photo}" class="img-fluid rounded border memory-thumb" alt="${countryName} memory">
+                                    </div>
+                                `).join("")
+        : `<p class="text-muted">No photos uploaded yet.</p>`}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="countryJournalInput" class="form-label fw-bold">Travel Journal</label>
+                        <textarea
+                            id="countryJournalInput"
+                            class="form-control"
+                            rows="5"
+                            placeholder="Write about your experience in ${countryName}..."
+                        >${journalText}</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" id="memoryUploadButton">Add Photo</button>
+                    <button type="button" class="btn btn-primary" id="saveJournalButton">Save Journal</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const modalInstance = new window.bootstrap.Modal(modal);
+    modalInstance.show();
+    const saveButton = document.getElementById("saveJournalButton");
+    const uploadButton = document.getElementById("memoryUploadButton");
+    const journalInput = document.getElementById("countryJournalInput");
+    saveButton?.addEventListener("click", () => {
+        saveCountryJournal(countryName, journalInput?.value ?? "");
+        modalInstance.hide();
+    });
+    uploadButton?.addEventListener("click", () => {
+        openPhotoPicker(countryName);
+        modalInstance.hide();
+    });
+    modal.addEventListener("hidden.bs.modal", () => {
+        modal.remove();
+    });
 }
 //======================================================
 //               MAIN COUNTRIES CARD BUILDER
@@ -477,66 +596,70 @@ function createCountryImage(country) {
     imgWrapper.appendChild(img);
     return imgWrapper;
 }
-// Create the country name heading
 function createCountryName(country) {
     const name = document.createElement("h6");
     name.textContent = country.name.common;
     name.classList.add("mt-2", "fw-bold");
     return name;
 }
-// Create the capital text
 function createCountryCapital(country) {
     const capital = document.createElement("p");
     capital.textContent = `Capital: ${country.capital?.[0] ?? "N/A"}`;
     return capital;
 }
-// Create the region text
 function createCountryRegion(country) {
     const region = document.createElement("p");
     region.textContent = `Region: ${country.region}`;
     return region;
 }
-// Create the population text
 function createCountryPopulation(country) {
     const population = document.createElement("p");
     population.textContent = `Population: ${country.population.toLocaleString()}`;
     return population;
 }
-// Build a full reusable country card
+// Create the country name heading
 function createCountryCard(country, clickHandler) {
     const col = document.createElement("div");
     col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
-    col.addEventListener("click", clickHandler);
     const currentUser = getCurrentUser();
-    // Visited toggle for logged-in users
+    col.addEventListener("click", () => {
+        const isVisited = isCountryVisited(country.name.common);
+        const photos = getCountryPhotos(country.name.common);
+        const journal = getCountryJournal(country.name.common).trim();
+        if (isVisited && (photos.length > 0 || journal.length > 0)) {
+            openCountryMemoryModal(country.name.common);
+        }
+        else {
+            clickHandler();
+        }
+    });
     if (currentUser) {
         const visitedToggle = createVisitedToggle(country);
         col.appendChild(visitedToggle);
     }
-    // Photo upload button only for visited countries
     if (currentUser && isCountryVisited(country.name.common)) {
         const photoButton = createPhotoUploadButton(country);
+        const journalButton = createJournalButton(country);
         col.appendChild(photoButton);
+        col.appendChild(journalButton);
     }
-    // Main card content
     const img = createCountryImage(country);
     const name = createCountryName(country);
+    const thumbnail = createCountryPhotoPreview(country.name.common);
+    col.appendChild(img);
+    col.appendChild(name);
+    if (thumbnail) {
+        col.appendChild(thumbnail);
+        return col;
+    }
     const capital = createCountryCapital(country);
     const region = createCountryRegion(country);
     const population = createCountryPopulation(country);
-    col.appendChild(img);
-    col.appendChild(name);
     col.appendChild(capital);
     col.appendChild(region);
     col.appendChild(population);
-    // Photo thumbnail preview if available
-    const thumbnail = createCountryPhotoPreview(country.name.common);
-    if (thumbnail) {
-        col.appendChild(thumbnail);
-    }
     return col;
 }
-// Render a list of countries to the page
 function renderCountryCards(countryList, clickHandlerBuilder) {
     const container = getCountryFlagsContainer();
     if (!container)
@@ -565,38 +688,25 @@ function createBackButton(homePage, newPage) {
 // Create left column with the country flag
 function createSearchLeftColumn(searchedCountry) {
     const leftCol = document.createElement("div");
-    leftCol.classList.add("col-12", "col-lg-6", "d-flex", "justify-content-center", "align-items-center");
+    leftCol.classList.add("col-12", "col-lg-6", "d-flex", "justify-content-center", "align-items-center", "position-relative");
     const img = document.createElement("img");
     img.src = searchedCountry.flags.svg;
     img.alt = searchedCountry.name.common;
     img.classList.add("flag-img", "border", "rounded");
     img.style.objectFit = "cover";
     leftCol.appendChild(img);
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const visitedToggle = createVisitedToggle(searchedCountry);
+        leftCol.appendChild(visitedToggle);
+        if (isCountryVisited(searchedCountry.name.common)) {
+            const photoButton = createPhotoUploadButton(searchedCountry);
+            leftCol.appendChild(photoButton);
+            const journalButton = createJournalButton(searchedCountry);
+            leftCol.appendChild(journalButton);
+        }
+    }
     return leftCol;
-}
-// Create top-left detail column
-function createTopLeftDetails(searchedCountry) {
-    const topLeft = document.createElement("div");
-    topLeft.classList.add("col-12", "col-lg-6", "p-3");
-    const countryName = document.createElement("h4");
-    countryName.textContent = searchedCountry.name.common;
-    const nativeName = document.createElement("p");
-    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
-    const population = document.createElement("p");
-    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
-    const region = document.createElement("p");
-    region.textContent = `Region: ${searchedCountry.region}`;
-    const subRegion = document.createElement("p");
-    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
-    const capital = document.createElement("p");
-    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
-    topLeft.appendChild(countryName);
-    topLeft.appendChild(nativeName);
-    topLeft.appendChild(population);
-    topLeft.appendChild(region);
-    topLeft.appendChild(subRegion);
-    topLeft.appendChild(capital);
-    return topLeft;
 }
 // Create top-right detail column
 function createTopRightDetails(searchedCountry) {
@@ -635,6 +745,30 @@ function createSearchTopSection(searchedCountry) {
     topSection.appendChild(topRow);
     return topSection;
 }
+// Create top left sectiom of the detail layout
+function createTopLeftDetails(searchedCountry) {
+    const topLeft = document.createElement("div");
+    topLeft.classList.add("col-12", "col-lg-6", "p-3");
+    const countryName = document.createElement("h4");
+    countryName.textContent = searchedCountry.name.common;
+    const nativeName = document.createElement("p");
+    nativeName.textContent = `Native Name: ${searchedCountry.name.official}`;
+    const population = document.createElement("p");
+    population.textContent = `Population: ${searchedCountry.population.toLocaleString()}`;
+    const region = document.createElement("p");
+    region.textContent = `Region: ${searchedCountry.region}`;
+    const subRegion = document.createElement("p");
+    subRegion.textContent = `Sub-region: ${searchedCountry.subregion ?? "N/A"}`;
+    const capital = document.createElement("p");
+    capital.textContent = `Capital: ${searchedCountry.capital?.[0] ?? "N/A"}`;
+    topLeft.appendChild(countryName);
+    topLeft.appendChild(nativeName);
+    topLeft.appendChild(population);
+    topLeft.appendChild(region);
+    topLeft.appendChild(subRegion);
+    topLeft.appendChild(capital);
+    return topLeft;
+}
 // Create bottom section shell for border countries
 function createBottomSectionShell() {
     const bottomSection = document.createElement("div");
@@ -644,7 +778,7 @@ function createBottomSectionShell() {
     borderTitle.classList.add("fw-bold", "mb-2");
     borderTitle.textContent = "Border Countries:";
     const borderWrap = document.createElement("div");
-    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2");
+    borderWrap.classList.add("d-flex", "flex-wrap", "gap-2", "position-relative");
     bottomSection.appendChild(borderTitle);
     bottomSection.appendChild(borderWrap);
     return { bottomSection, borderWrap };
@@ -808,6 +942,7 @@ async function handleChange(event) {
 // Handle search form submission
 async function handleSubmit(event) {
     event.preventDefault();
+    clearCountryError();
     const searchValue = searchInput?.value.trim();
     if (!searchValue) {
         console.log("No input provided");
@@ -877,6 +1012,8 @@ if (themeToggle) {
         applyTheme(newTheme);
     });
 }
+// Clear error message if input is corrected
+searchInput?.addEventListener("input", clearCountryError);
 // Filter dropdown listener
 filterDD?.addEventListener("change", handleChange);
 // Search form listener
