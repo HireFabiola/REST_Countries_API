@@ -620,7 +620,7 @@ function createCountryPopulation(country) {
 // Create the country name heading
 function createCountryCard(country, clickHandler) {
     const col = document.createElement("div");
-    col.classList.add("position-relative", "border", "rounded", "p-2", "shadow-sm");
+    col.classList.add("country-card", "position-relative", "border", "rounded", "p-2", "shadow-sm");
     const currentUser = getCurrentUser();
     col.addEventListener("click", () => {
         const isVisited = isCountryVisited(country.name.common);
@@ -672,13 +672,13 @@ function renderCountryCards(countryList, clickHandlerBuilder) {
     }
 }
 // ===================================================================================
-//                          SEARCH / DETAIL PAGE BUILDERS
+//                       SEARCH & INFORMATION PAGE LAYOUT BUILDER
 // ====================================================================================
 // Create back button for returning to main layout
 function createBackButton(homePage, newPage) {
     const backButton = document.createElement("div");
     backButton.textContent = "← Back";
-    backButton.classList.add("btn", "btn-outline-secondary", "mb-3", "d-inline-block");
+    backButton.classList.add("back-btn", "btn", "btn-outline-secondary", "mb-3", "d-inline-block");
     backButton.addEventListener("click", async () => {
         newPage.classList.add("d-none");
         homePage.classList.remove("d-none");
@@ -788,7 +788,7 @@ function createBorderCountryButton(country) {
     const borderItem = document.createElement("button");
     borderItem.type = "button";
     borderItem.textContent = country.name.common;
-    borderItem.classList.add("btn", "btn-outline-primary", "btn-sm");
+    borderItem.classList.add("border-country-btn", "btn", "btn-outline-primary", "btn-sm");
     borderItem.addEventListener("mouseenter", async () => {
         await showBorderCountryHover(country.name.common, borderItem);
     });
