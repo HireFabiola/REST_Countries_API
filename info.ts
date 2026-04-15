@@ -1,4 +1,4 @@
-import { getSearchCountry } from "./main.js";
+import { getSearchCountry } from "./main.js"
 
 const params = new URLSearchParams(window.location.search);
 const countryName = params.get("country");
