@@ -902,8 +902,8 @@ async function showBorderCountryHover(countryName, anchor) {
 }
 // Logo paths for each theme
 const logos = {
-    dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",
-    light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
+    dark: "./images/DarkLogo.png",
+    light: "./images/WhiteLogo.png"
 };
 // Apply selected theme and matching logo
 function applyTheme(theme) {
