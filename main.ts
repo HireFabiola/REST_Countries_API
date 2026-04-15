@@ -774,7 +774,7 @@ function openCountryMemoryModal(countryName: string): void {
         modalInstance.hide();
     });
 
-    uploadButton?.addEventListener("click", () => {
+    uploadButton?.addEventListener("click", () => { 
         openPhotoPicker(countryName);
         modalInstance.hide();
     });
@@ -1236,8 +1236,8 @@ type Theme = "dark" | "light";
 
 // Logo paths for each theme
 const logos: Record<Theme, string> = {
-    dark: "../Project_HtmlCSSJavaScript/images/DarkLogo.png",
-    light: "../Project_HtmlCSSJavaScript/images/WhiteLogo.png"
+    dark: "./images/DarkLogo.png",
+    light: "./images/WhiteLogo.png"
 };
 
 // Apply selected theme and matching logo
