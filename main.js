@@ -294,6 +294,19 @@ function updateVisitedButtonState(button, countryName) {
         ? `${countryName} marked as visited`
         : `Mark ${countryName} as visited`);
 }
+// Refresh the current country display and counter after toggling visited status
+async function refreshCountryDisplayAfterToggle(visitedAfterToggle) {
+    updateTravelCounterFromStoredCountries();
+    renderVisitedFilter();
+    const countryFlagsContainer = document.getElementById("countryFlags");
+    if (!countryFlagsContainer) return;
+    const selectedRegion = filterDD?.value;
+    if (selectedRegion === "visited" && !visitedAfterToggle) {
+        await getCountryInfo();
+        return;
+    }
+    await handleChange(new Event("change"));
+}
 // Create the visited toggle button for each country card
 function createVisitedToggle(country) {
     const button = document.createElement("button");
@@ -302,12 +315,13 @@ function createVisitedToggle(country) {
     button.setAttribute("aria-label", `Mark ${country.name.common} as visited`);
     button.title = "Mark as visited";
     updateVisitedButtonState(button, country.name.common);
-    button.addEventListener("click", (event) => {
+    button.addEventListener("click", async (event) => {
         event.stopPropagation();
+        const wasVisited = isCountryVisited(country.name.common);
+        const visitedAfterToggle = !wasVisited;
         toggleVisitedCountry(country.name.common);
         updateVisitedButtonState(button, country.name.common);
-        updateTravelCounterFromStoredCountries();
-        renderVisitedFilter();
+        await refreshCountryDisplayAfterToggle(visitedAfterToggle);
     });
     return button;
 }
@@ -372,15 +386,41 @@ function showVisitedCountries() {
         `;
         return;
     }
-    const containerChildren = Array.from(container.children);
-    containerChildren.forEach(card => {
-        const countryName = card.querySelector("h6")?.textContent;
-        if (countryName && visitedNames.includes(countryName)) {
-            card.style.display = "block";
+    // Fetch all countries to get the visited ones
+    fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags")
+        .then(response => response.json())
+        .then((countries) => {
+        const visitedCountries = countries.filter(country => visitedNames.includes(country.name.common));
+        clearContainer(container);
+        // Create visited countries section
+        const visitedSection = document.createElement("div");
+        visitedSection.classList.add("mb-4");
+        const visitedHeading = document.createElement("h3");
+        visitedHeading.textContent = "Countries Visited";
+        visitedHeading.classList.add("text-success", "mb-3", "mt-3");
+        visitedSection.appendChild(visitedHeading);
+        const visitedContainer = document.createElement("div");
+        visitedContainer.classList.add("row", "g-3");
+        for (const country of visitedCountries) {
+            const col = createCountryCard(country, () => {
+                const countryName = encodeURIComponent(country.name.common);
+                window.open(`info.html?country=${countryName}`, "_blank");
+            });
+            col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
+            visitedContainer.appendChild(col);
         }
-        else {
-            card.style.display = "none";
-        }
+        visitedSection.appendChild(visitedContainer);
+        container.appendChild(visitedSection);
+    })
+        .catch(error => {
+        console.error("Error fetching countries:", error);
+        container.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger text-center">
+                        Error loading visited countries.
+                    </div>
+                </div>
+            `;
     });
 }
 // Render the "Visited" filter button dynamically
@@ -666,10 +706,52 @@ function renderCountryCards(countryList, clickHandlerBuilder) {
     if (!container)
         return;
     clearContainer(container);
+    // Separate countries into visited and unvisited
+    const visitedCountries = [];
+    const unvisitedCountries = [];
     for (const country of countryList) {
-        const col = createCountryCard(country, clickHandlerBuilder(country));
-        col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
-        container.appendChild(col);
+        if (isCountryVisited(country.name.common)) {
+            visitedCountries.push(country);
+        }
+        else {
+            unvisitedCountries.push(country);
+        }
+    }
+    // Create visited countries section
+    if (visitedCountries.length > 0) {
+        const visitedSection = document.createElement("div");
+        visitedSection.classList.add("mb-4");
+        const visitedHeading = document.createElement("h3");
+        visitedHeading.textContent = "Countries Visited";
+        visitedHeading.classList.add("text-success", "mb-3", "mt-3");
+        visitedSection.appendChild(visitedHeading);
+        const visitedContainer = document.createElement("div");
+        visitedContainer.classList.add("row", "g-3");
+        for (const country of visitedCountries) {
+            const col = createCountryCard(country, clickHandlerBuilder(country));
+            col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
+            visitedContainer.appendChild(col);
+        }
+        visitedSection.appendChild(visitedContainer);
+        container.appendChild(visitedSection);
+    }
+    // Create unvisited countries section
+    if (unvisitedCountries.length > 0) {
+        const unvisitedSection = document.createElement("div");
+        unvisitedSection.classList.add("mb-4");
+        const unvisitedHeading = document.createElement("h3");
+        unvisitedHeading.textContent = "Explore Next";
+        unvisitedHeading.classList.add("text-primary", "mb-3", "mt-3");
+        unvisitedSection.appendChild(unvisitedHeading);
+        const unvisitedContainer = document.createElement("div");
+        unvisitedContainer.classList.add("row", "g-3");
+        for (const country of unvisitedCountries) {
+            const col = createCountryCard(country, clickHandlerBuilder(country));
+            col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
+            unvisitedContainer.appendChild(col);
+        }
+        unvisitedSection.appendChild(unvisitedContainer);
+        container.appendChild(unvisitedSection);
     }
 }
 // ===================================================================================
