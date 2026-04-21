@@ -44,6 +44,9 @@ const registerMessage = document.getElementById("registerMessage") as HTMLElemen
 // Modal
 const authModal = document.getElementById("authModal") as HTMLElement | null;
 
+// Global state
+let totalWorldCountries: number = 0;
+
 // =================================================================================
 //                                  DATA TYPES
 // =================================================================================
@@ -485,10 +488,8 @@ function renderTravelCounter(totalCountries: number): void {
 
 // Recalculate counter based on currently rendered countries
 function updateTravelCounterFromStoredCountries(): void {
-    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
-
-    if (totalCountries > 0) {
-        renderTravelCounter(totalCountries);
+    if (totalWorldCountries > 0) {
+        renderTravelCounter(totalWorldCountries);
     }
 }
 
@@ -1314,6 +1315,8 @@ async function getCountryInfo(): Promise<void> {
 
     const result: Country[] = await response.json();
 
+    totalWorldCountries = result.length;
+
     renderCountryCards(result, (country: Country) => {
         return () => {
             const countryName = encodeURIComponent(country.name.common);
@@ -1322,7 +1325,7 @@ async function getCountryInfo(): Promise<void> {
         };
     });
 
-    renderTravelCounter(result.length);
+    renderTravelCounter(totalWorldCountries);
 }
 
 

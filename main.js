@@ -34,6 +34,8 @@ const loginMessage = document.getElementById("loginMessage");
 const registerMessage = document.getElementById("registerMessage");
 // Modal
 const authModal = document.getElementById("authModal");
+// Global state
+let totalWorldCountries = 0;
 // ================================================================
 //                       HELPER FUNCTIONS
 // ================================================================
@@ -339,9 +341,8 @@ function renderTravelCounter(totalCountries) {
 }
 // Recalculate counter based on currently rendered countries
 function updateTravelCounterFromStoredCountries() {
-    const totalCountries = document.querySelectorAll("#countryFlags > div").length;
-    if (totalCountries > 0) {
-        renderTravelCounter(totalCountries);
+    if (totalWorldCountries > 0) {
+        renderTravelCounter(totalWorldCountries);
     }
 }
 // Show only visited countries in the grid
@@ -955,6 +956,7 @@ async function handleSubmit(event) {
 async function getCountryInfo() {
     const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags");
     const result = await response.json();
+    totalWorldCountries = result.length;
     renderCountryCards(result, (country) => {
         return () => {
             const countryName = encodeURIComponent(country.name.common);
@@ -962,7 +964,7 @@ async function getCountryInfo() {
             console.log(countryName);
         };
     });
-    renderTravelCounter(result.length);
+    renderTravelCounter(totalWorldCountries);
 }
 // Fetch a single searched country and render the detail layout
 export async function getSearchCountry(name) {
