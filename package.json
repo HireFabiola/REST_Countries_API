@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+ "scripts": {
+  "build": "tsc",
+  "watch": "tsc -w"
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HireFabiola/Project_HtmlCSSJavaScript.git"

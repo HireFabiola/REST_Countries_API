@@ -1,4 +1,3 @@
-console.log("MAIN TS MAP VERSION LOADED");
 // =================================================================================
 //                                  DOM REFERENCES
 // =================================================================================
@@ -270,6 +269,25 @@ function renderVisitedWorldMap(countries) {
     mapContainer.style.maxHeight = "420px";
     mapContainer.style.height = "auto";
     mapContainer.innerHTML = "";
+    // ===== Travel Header =====
+    const header = document.createElement("h4");
+    header.classList.add("text-center", "fw-bold", "mb-1");
+    header.textContent = "✈️ WanderLust Map";
+    // ===== Dynamic Message =====
+    const message = document.createElement("p");
+    message.classList.add("text-center", "text-muted", "mb-2");
+    if (!user) {
+        message.textContent = "Log in to start tracking your adventures.";
+    }
+    else if (user.visitedCountries.length === 0) {
+        message.textContent = "Your journey starts here — mark your first destination!";
+    }
+    else {
+        message.textContent = "Look at you go! Your journey is lighting up the world one country at a time.";
+    }
+    // Add to container
+    mapContainer.appendChild(header);
+    mapContainer.appendChild(message);
     const mapDiv = document.createElement("div");
     mapDiv.id = "mapInner";
     mapDiv.style.width = "100%";
@@ -458,9 +476,8 @@ function showVisitedCountries() {
         const visitedContainer = document.createElement("div");
         visitedContainer.classList.add("row", "g-3");
         for (const country of visitedCountries) {
-            const col = createCountryCard(country, () => {
-                const countryName = encodeURIComponent(country.name.common);
-                window.open(`info.html?country=${countryName}`, "_blank");
+            const col = createCountryCard(country, async () => {
+                await navigateToCountryDetail(country.name.common);
             });
             col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
             visitedContainer.appendChild(col);
@@ -597,11 +614,15 @@ function createCountryPhotoPreview(countryName) {
     if (!firstPhoto)
         return null;
     const wrapper = document.createElement("div");
-    wrapper.classList.add("country-photo-large");
+    wrapper.classList.add("w-100", "rounded", "overflow-hidden", "mt-2");
+    wrapper.style.aspectRatio = "4 / 3";
+    wrapper.style.maxHeight = "180px";
     const img = document.createElement("img");
     img.src = firstPhoto;
     img.alt = `${countryName} travel photo`;
-    img.classList.add("country-photo-large-img");
+    img.classList.add("w-100", "h-100");
+    img.style.objectFit = "cover";
+    img.style.display = "block";
     wrapper.appendChild(img);
     return wrapper;
 }
@@ -611,6 +632,55 @@ function getCountryPhotos(countryName) {
     if (!user || !user.countryPhotos)
         return [];
     return user.countryPhotos[countryName] ?? [];
+}
+// Auto search logic
+const suggestionsBox = document.getElementById("countrySuggestions");
+let searchTimeout;
+searchInput?.addEventListener("input", () => {
+    const query = searchInput.value.trim();
+    window.clearTimeout(searchTimeout);
+    if (!suggestionsBox)
+        return;
+    suggestionsBox.innerHTML = "";
+    if (query.length < 2)
+        return;
+    searchTimeout = window.setTimeout(async () => {
+        try {
+            const response = await fetch(`https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,flags,cca2`);
+            if (!response.ok) {
+                suggestionsBox.innerHTML = "";
+                return;
+            }
+            const countries = await response.json();
+            suggestionsBox.innerHTML = "";
+            countries.slice(0, 8).forEach((country) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.classList.add("list-group-item", "list-group-item-action", "d-flex", "align-items-center", "gap-2");
+                button.innerHTML = `
+                    <img src="${country.flags.svg}" alt="${country.name.common}" width="28">
+                    <span>${country.name.common}</span>
+                `;
+                button.addEventListener("click", async () => {
+                    searchInput.value = country.name.common;
+                    suggestionsBox.innerHTML = "";
+                    await getSearchCountry(country.name.common);
+                });
+                suggestionsBox.appendChild(button);
+            });
+        }
+        catch (error) {
+            console.error("Autocomplete error:", error);
+            suggestionsBox.innerHTML = "";
+        }
+    }, 300);
+});
+// Navigate to a country detail view inside the single page app
+async function navigateToCountryDetail(countryName) {
+    removeHoverCard();
+    await getSearchCountry(countryName);
+    const newPage = document.getElementById("newLayout");
+    newPage?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 function openCountryMemoryModal(countryName) {
     const existing = document.getElementById("memoryModal");
@@ -935,10 +1005,9 @@ function createBorderCountryButton(country) {
     borderItem.addEventListener("mouseleave", () => {
         removeHoverCard();
     });
-    borderItem.addEventListener("click", (event) => {
+    borderItem.addEventListener("click", async (event) => {
         event.stopPropagation();
-        const countryName = encodeURIComponent(country.name.common);
-        window.open(`info.html?country=${countryName}`, "_blank");
+        await navigateToCountryDetail(country.name.common);
     });
     return borderItem;
 }
@@ -1073,9 +1142,8 @@ async function handleChange(event) {
     const response = await fetch(`https://restcountries.com/v3.1/region/${selectedRegion}`);
     const result = await response.json();
     renderCountryCards(result, (country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `info.html?country=${countryName}`;
+        return async () => {
+            await navigateToCountryDetail(country.name.common);
         };
     });
 }
@@ -1098,10 +1166,8 @@ async function getCountryInfo() {
     const result = await response.json();
     totalWorldCountries = result.length;
     renderCountryCards(result, (country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.open(`info.html?country=${countryName}`, "_blank");
-            console.log(countryName);
+        return async () => {
+            await navigateToCountryDetail(country.name.common);
         };
     });
     console.log("STEP 2: before renderTravelCounter");

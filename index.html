@@ -17,10 +17,10 @@
     <!--Link to jsvectormap for interactive map tracking-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css">
 
-<script defer src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/js/jsvectormap.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/js/jsvectormap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
     <!-- TypeScript output JS -->
-   <script type="module" defer src="./main.js?v=999"></script>
+    <script type="module" defer src="./main.js?v=999"></script>
 </head>
 
 
@@ -88,7 +88,8 @@
 
                             <input id="searchField" type="text" class="form-control" placeholder="Search a country..."
                                 aria-label="Search for a country">
-
+                            <div id="countrySuggestions" class="list-group position-absolute w-100 z-3"></div>
+                            
                             <button class="btn btn-secondary" type="submit">
                                 Search
                             </button>

@@ -1,4 +1,4 @@
-console.log("MAIN TS MAP VERSION LOADED");
+
 // =================================================================================
 //                                  DOM REFERENCES
 // =================================================================================
@@ -395,6 +395,27 @@ function renderVisitedWorldMap(countries: Country[]): void {
 
     mapContainer.innerHTML = "";
 
+    // ===== Travel Header =====
+const header = document.createElement("h4");
+header.classList.add("text-center", "fw-bold", "mb-1");
+header.textContent = "✈️ WanderLust Map";
+
+// ===== Dynamic Message =====
+const message = document.createElement("p");
+message.classList.add("text-center", "text-muted", "mb-2");
+
+if (!user) {
+    message.textContent = "Log in to start tracking your adventures.";
+} else if (user.visitedCountries.length === 0) {
+    message.textContent = "Your journey starts here — mark your first destination!";
+} else {
+    message.textContent = "Look at you go! Your journey is lighting up the world one country at a time.";
+}
+
+// Add to container
+mapContainer.appendChild(header);
+mapContainer.appendChild(message);
+
     const mapDiv = document.createElement("div");
     mapDiv.id = "mapInner";
     mapDiv.style.width = "100%";
@@ -644,9 +665,8 @@ function showVisitedCountries(): void {
             visitedContainer.classList.add("row", "g-3");
 
             for (const country of visitedCountries) {
-                const col = createCountryCard(country, () => {
-                    const countryName = encodeURIComponent(country.name.common);
-                    window.open(`info.html?country=${countryName}`, "_blank");
+                const col = createCountryCard(country, async () => {
+                    await navigateToCountryDetail(country.name.common);
                 });
                 col.classList.add("col-12", "col-md-6", "col-lg-3", "border", "rounded", "shadow-sm");
                 visitedContainer.appendChild(col);
@@ -848,6 +868,78 @@ function getCountryPhotos(countryName: string): string[] {
     return user.countryPhotos[countryName] ?? [];
 }
 
+// Auto search logic
+const suggestionsBox = document.getElementById("countrySuggestions") as HTMLElement | null;
+
+let searchTimeout: number | undefined;
+
+searchInput?.addEventListener("input", () => {
+    const query = searchInput.value.trim();
+
+    window.clearTimeout(searchTimeout);
+
+    if (!suggestionsBox) return;
+
+    suggestionsBox.innerHTML = "";
+
+    if (query.length < 2) return;
+
+    searchTimeout = window.setTimeout(async () => {
+        try {
+            const response = await fetch(
+                `https://restcountries.com/v3.1/name/${encodeURIComponent(query)}?fields=name,flags,cca2`
+            );
+
+            if (!response.ok) {
+                suggestionsBox.innerHTML = "";
+                return;
+            }
+
+            const countries: Country[] = await response.json();
+
+            suggestionsBox.innerHTML = "";
+
+            countries.slice(0, 8).forEach((country) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.classList.add(
+                    "list-group-item",
+                    "list-group-item-action",
+                    "d-flex",
+                    "align-items-center",
+                    "gap-2"
+                );
+
+                button.innerHTML = `
+                    <img src="${country.flags.svg}" alt="${country.name.common}" width="28">
+                    <span>${country.name.common}</span>
+                `;
+
+                button.addEventListener("click", async () => {
+                    searchInput.value = country.name.common;
+                    suggestionsBox.innerHTML = "";
+                    await getSearchCountry(country.name.common);
+                });
+
+                suggestionsBox.appendChild(button);
+            });
+        } catch (error) {
+            console.error("Autocomplete error:", error);
+            suggestionsBox.innerHTML = "";
+        }
+    }, 300);
+});
+
+
+// Navigate to a country detail view inside the single page app
+async function navigateToCountryDetail(countryName: string): Promise<void> {
+    removeHoverCard();
+    await getSearchCountry(countryName);
+
+    const newPage = document.getElementById("newLayout");
+    newPage?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function openCountryMemoryModal(countryName: string): void {
     const existing = document.getElementById("memoryModal");
     if (existing) {
@@ -972,7 +1064,7 @@ function createCountryPopulation(country: Country): HTMLParagraphElement {
 // Create the country name heading
 function createCountryCard(
     country: Country,
-    clickHandler: () => void
+    clickHandler: () => void | Promise<void>
 ): HTMLDivElement {
     const col = document.createElement("div");
     col.classList.add("country-card", "position-relative", "border", "rounded", "p-2", "shadow-sm");
@@ -1028,7 +1120,7 @@ function createCountryCard(
 
 function renderCountryCards(
     countryList: Country[],
-    clickHandlerBuilder: (country: Country) => () => void
+    clickHandlerBuilder: (country: Country) => () => void | Promise<void>
 ): void {
     const container = getCountryFlagsContainer();
 
@@ -1270,11 +1362,10 @@ function createBorderCountryButton(country: { name: { common: string } }): HTMLB
         removeHoverCard();
     });
 
-    borderItem.addEventListener("click", (event) => {
+    borderItem.addEventListener("click", async (event) => {
         event.stopPropagation();
 
-        const countryName = encodeURIComponent(country.name.common);
-        window.open(`info.html?country=${countryName}`, "_blank");
+        await navigateToCountryDetail(country.name.common);
     });
 
     return borderItem;
@@ -1474,9 +1565,8 @@ async function handleChange(event: Event): Promise<void> {
     const result: Country[] = await response.json();
 
     renderCountryCards(result, (country: Country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.location.href = `info.html?country=${countryName}`;
+        return async () => {
+            await navigateToCountryDetail(country.name.common);
         };
     });
 }
@@ -1513,10 +1603,8 @@ async function getCountryInfo(): Promise<void> {
     totalWorldCountries = result.length;
 
     renderCountryCards(result, (country: Country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.open(`info.html?country=${countryName}`, "_blank");
-            console.log(countryName);
+        return async () => {
+            await navigateToCountryDetail(country.name.common);
         };
     });
 
