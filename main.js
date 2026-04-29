@@ -37,6 +37,8 @@ const authModal = document.getElementById("authModal");
 // Global state
 let totalWorldCountries = 0;
 let visitedMap = null;
+// Adding cache for world map real load optimization
+let cachedCountries = null;
 // ================================================================
 //                       HELPER FUNCTIONS
 // ================================================================
@@ -1162,17 +1164,23 @@ async function handleSubmit(event) {
 // Fetch and render all countries on the main page
 async function getCountryInfo() {
     console.log("STEP 1: getCountryInfo started");
-    const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags,cca2");
-    const result = await response.json();
+    let result;
+    if (cachedCountries) {
+        result = cachedCountries;
+    }
+    else {
+        const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags,cca2");
+        result = await response.json();
+        cachedCountries = result;
+    }
     totalWorldCountries = result.length;
     renderCountryCards(result, (country) => {
-        return async () => {
-            await navigateToCountryDetail(country.name.common);
+        return () => {
+            const countryName = encodeURIComponent(country.name.common);
+            window.open(`info.html?country=${countryName}`, "_blank");
         };
     });
-    console.log("STEP 2: before renderTravelCounter");
     renderTravelCounter(totalWorldCountries);
-    console.log("STEP 3: before renderVisitedWorldMap");
     renderVisitedWorldMap(result);
 }
 // Fetch a single searched country and render the detail layout
