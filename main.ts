@@ -1,3 +1,4 @@
+console.log("MAIN TS MAP VERSION LOADED");
 // =================================================================================
 //                                  DOM REFERENCES
 // =================================================================================
@@ -46,6 +47,7 @@ const authModal = document.getElementById("authModal") as HTMLElement | null;
 
 // Global state
 let totalWorldCountries: number = 0;
+let visitedMap: any = null;
 
 // =================================================================================
 //                                  DATA TYPES
@@ -53,6 +55,7 @@ let totalWorldCountries: number = 0;
 
 // Country data from REST Countries API
 interface Country {
+    cca2: string;
     name: {
         common: string;
         official: string;
@@ -368,6 +371,78 @@ function initAuth(): void {
 // ====================================================================
 //              VISITED COUNTRIES & PROGRESS TRACKING
 // =====================================================================
+function renderVisitedWorldMap(countries: Country[]): void {
+    const mapContainer = document.getElementById("visitedWorldMap");
+    const user = getLoggedInRegisteredUser();
+
+    if (!mapContainer) return;
+
+    mapContainer.classList.add(
+        "w-100",
+        "mx-auto",
+        "border",
+        "rounded-4",
+        "overflow-hidden",
+        "shadow-sm"
+    );
+
+    mapContainer.style.maxWidth = "900px";
+    mapContainer.style.width = "100%";
+    mapContainer.style.aspectRatio = "16 / 9";
+    mapContainer.style.minHeight = "240px";
+    mapContainer.style.maxHeight = "420px";
+    mapContainer.style.height = "auto";
+
+    mapContainer.innerHTML = "";
+
+    const mapDiv = document.createElement("div");
+    mapDiv.id = "mapInner";
+    mapDiv.style.width = "100%";
+    mapDiv.style.height = "100%";
+
+    mapContainer.appendChild(mapDiv);
+
+    const visitedCountryCodes = user
+        ? countries
+            .filter(country => user.visitedCountries.includes(country.name.common))
+            .map(country => country.cca2)
+        : [];
+
+    const selectedRegions = visitedCountryCodes;
+
+    visitedMap = new (window as any).jsVectorMap({
+        selector: "#mapInner",
+        map: "world",
+        zoomButtons: true,
+        selectedRegions,
+        regionStyle: {
+            initial: {
+                fill: "#dee2e6"
+            },
+            selected: {
+                fill: "#198754"
+            }
+        },
+        onRegionTooltipShow(event: Event, tooltip: any, code: string) {
+            const country = countries.find(country => country.cca2 === code);
+            if (!country) return;
+
+            const visited = user
+                ? user.visitedCountries.includes(country.name.common)
+                : false;
+
+            tooltip.text(
+                visited
+                    ? `${country.name.common} ✓ Visited`
+                    : country.name.common
+            );
+        }
+    });
+
+    setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+    }, 100);
+}
 
 // Check if a country has been marked as visited
 function isCountryVisited(countryName: string): boolean {
@@ -475,6 +550,7 @@ function createVisitedToggle(country: Country): HTMLButtonElement {
 }
 
 function renderTravelCounter(totalCountries: number): void {
+
     const counter = document.getElementById("travelCounter");
     const user = getLoggedInRegisteredUser();
 
@@ -753,6 +829,7 @@ function createCountryPhotoPreview(countryName: string): HTMLDivElement | null {
 }
 
 function getCountryPhotos(countryName: string): string[] {
+    console.log("Maybe here?")
     const user = getLoggedInRegisteredUser();
 
     if (!user || !user.countryPhotos) return [];
@@ -829,7 +906,7 @@ function openCountryMemoryModal(countryName: string): void {
         modalInstance.hide();
     });
 
-    uploadButton?.addEventListener("click", () => { 
+    uploadButton?.addEventListener("click", () => {
         openPhotoPicker(countryName);
         modalInstance.hide();
     });
@@ -1415,8 +1492,9 @@ async function handleSubmit(event: Event): Promise<void> {
 
 // Fetch and render all countries on the main page
 async function getCountryInfo(): Promise<void> {
+    console.log("STEP 1: getCountryInfo started");
     const response = await fetch(
-        "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags"
+        "https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags,cca2"
     );
 
     const result: Country[] = await response.json();
@@ -1431,7 +1509,11 @@ async function getCountryInfo(): Promise<void> {
         };
     });
 
+    console.log("STEP 2: before renderTravelCounter");
     renderTravelCounter(totalWorldCountries);
+
+    console.log("STEP 3: before renderVisitedWorldMap");
+    renderVisitedWorldMap(result);
 }
 
 

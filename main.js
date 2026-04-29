@@ -299,7 +299,8 @@ async function refreshCountryDisplayAfterToggle(visitedAfterToggle) {
     updateTravelCounterFromStoredCountries();
     renderVisitedFilter();
     const countryFlagsContainer = document.getElementById("countryFlags");
-    if (!countryFlagsContainer) return;
+    if (!countryFlagsContainer)
+        return;
     const selectedRegion = filterDD?.value;
     if (selectedRegion === "visited" && !visitedAfterToggle) {
         await getCountryInfo();
@@ -1107,4 +1108,3 @@ initAuth();
 updateSearchPlaceholder();
 getCountryInfo();
 renderVisitedFilter();
-//# sourceMappingURL=main.js.map
