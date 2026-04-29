@@ -1,3 +1,4 @@
+console.log("MAIN TS MAP VERSION LOADED");
 // =================================================================================
 //                                  DOM REFERENCES
 // =================================================================================
@@ -36,6 +37,7 @@ const registerMessage = document.getElementById("registerMessage");
 const authModal = document.getElementById("authModal");
 // Global state
 let totalWorldCountries = 0;
+let visitedMap = null;
 // ================================================================
 //                       HELPER FUNCTIONS
 // ================================================================
@@ -255,6 +257,59 @@ function initAuth() {
 // ====================================================================
 //              VISITED COUNTRIES & PROGRESS TRACKING
 // =====================================================================
+function renderVisitedWorldMap(countries) {
+    const mapContainer = document.getElementById("visitedWorldMap");
+    const user = getLoggedInRegisteredUser();
+    if (!mapContainer)
+        return;
+    mapContainer.classList.add("w-100", "mx-auto", "border", "rounded-4", "overflow-hidden", "shadow-sm");
+    mapContainer.style.maxWidth = "900px";
+    mapContainer.style.width = "100%";
+    mapContainer.style.aspectRatio = "16 / 9";
+    mapContainer.style.minHeight = "240px";
+    mapContainer.style.maxHeight = "420px";
+    mapContainer.style.height = "auto";
+    mapContainer.innerHTML = "";
+    const mapDiv = document.createElement("div");
+    mapDiv.id = "mapInner";
+    mapDiv.style.width = "100%";
+    mapDiv.style.height = "100%";
+    mapContainer.appendChild(mapDiv);
+    const visitedCountryCodes = user
+        ? countries
+            .filter(country => user.visitedCountries.includes(country.name.common))
+            .map(country => country.cca2)
+        : [];
+    const selectedRegions = visitedCountryCodes;
+    visitedMap = new window.jsVectorMap({
+        selector: "#mapInner",
+        map: "world",
+        zoomButtons: true,
+        selectedRegions,
+        regionStyle: {
+            initial: {
+                fill: "#dee2e6"
+            },
+            selected: {
+                fill: "#198754"
+            }
+        },
+        onRegionTooltipShow(event, tooltip, code) {
+            const country = countries.find(country => country.cca2 === code);
+            if (!country)
+                return;
+            const visited = user
+                ? user.visitedCountries.includes(country.name.common)
+                : false;
+            tooltip.text(visited
+                ? `${country.name.common} ✓ Visited`
+                : country.name.common);
+        }
+    });
+    setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+    }, 100);
+}
 // Check if a country has been marked as visited
 function isCountryVisited(countryName) {
     const user = getLoggedInRegisteredUser();
@@ -551,6 +606,7 @@ function createCountryPhotoPreview(countryName) {
     return wrapper;
 }
 function getCountryPhotos(countryName) {
+    console.log("Maybe here?");
     const user = getLoggedInRegisteredUser();
     if (!user || !user.countryPhotos)
         return [];
@@ -1037,7 +1093,8 @@ async function handleSubmit(event) {
 }
 // Fetch and render all countries on the main page
 async function getCountryInfo() {
-    const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags");
+    console.log("STEP 1: getCountryInfo started");
+    const response = await fetch("https://restcountries.com/v3.1/all?fields=name,capital,region,population,flags,cca2");
     const result = await response.json();
     totalWorldCountries = result.length;
     renderCountryCards(result, (country) => {
@@ -1047,7 +1104,10 @@ async function getCountryInfo() {
             console.log(countryName);
         };
     });
+    console.log("STEP 2: before renderTravelCounter");
     renderTravelCounter(totalWorldCountries);
+    console.log("STEP 3: before renderVisitedWorldMap");
+    renderVisitedWorldMap(result);
 }
 // Fetch a single searched country and render the detail layout
 export async function getSearchCountry(name) {
@@ -1108,3 +1168,4 @@ initAuth();
 updateSearchPlaceholder();
 getCountryInfo();
 renderVisitedFilter();
+//# sourceMappingURL=main.js.map
