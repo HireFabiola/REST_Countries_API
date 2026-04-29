@@ -817,12 +817,23 @@ function createCountryPhotoPreview(countryName: string): HTMLDivElement | null {
     if (!firstPhoto) return null;
 
     const wrapper = document.createElement("div");
-    wrapper.classList.add("country-photo-large");
+    wrapper.classList.add(
+        "w-100",
+        "rounded",
+        "overflow-hidden",
+        "mt-2"
+    );
+
+    wrapper.style.aspectRatio = "4 / 3";
+    wrapper.style.maxHeight = "180px";
 
     const img = document.createElement("img");
     img.src = firstPhoto;
     img.alt = `${countryName} travel photo`;
-    img.classList.add("country-photo-large-img");
+
+    img.classList.add("w-100", "h-100");
+    img.style.objectFit = "cover";
+    img.style.display = "block";
 
     wrapper.appendChild(img);
     return wrapper;
