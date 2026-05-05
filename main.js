@@ -1175,9 +1175,8 @@ async function getCountryInfo() {
     }
     totalWorldCountries = result.length;
     renderCountryCards(result, (country) => {
-        return () => {
-            const countryName = encodeURIComponent(country.name.common);
-            window.open(`info.html?country=${countryName}`, "_blank");
+        return async () => {
+            await navigateToCountryDetail(country.name.common);
         };
     });
     renderTravelCounter(totalWorldCountries);
