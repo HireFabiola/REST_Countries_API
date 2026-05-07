@@ -409,7 +409,7 @@ function renderTravelCounter(totalCountries) {
     if (!user) {
         counter.innerHTML = `
             <div class="text-center">
-                <div class="fw-bold">Because all who wander... 🌍</div>
+                <div class="fw-bold">Because Not All Who Wander Are Lost 🌍</div>
                 <div>Log in or register to track the countries you've explored.</div>
             </div>
         `;
